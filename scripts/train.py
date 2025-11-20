@@ -1,17 +1,19 @@
 from datetime import datetime
+import os
 import wandb
+from ultralytics import YOLO, settings
 
 
 def train(model, config):
     run_name = datetime.now().strftime("%Y%m%d_%H%M%S")
     # wandb init
     wandb.init(
-        project="waste-sorting",
+        project=config["project"],
         name=run_name,
         tags=config["tags"],
         config={
             "model_type": config["model"],
-            "pretrain_weight": config["pretrain_weight"],
+            "pretrain_weight": config["model"],
             "dataset": config["data_path"],
         },
     )
@@ -30,4 +32,26 @@ def train(model, config):
     # finish wandb
     wandb.finish()
     return results
-`
+
+
+def test(run_name, config):
+    wandb.init(project=config["project"], name=f"${run_name}_test", tags=test)
+    model_path = os.path.join(
+        settings["runs_dir"], "detect", run_name, "weights", "best.pt"
+    )
+    model = YOLO(model_path)
+    results = model.val(
+        data=config["data_path"],
+        batch=config["batch_size"],
+        imgsz=config["image_size"],
+        device=config["device"],
+    )
+    wandb.summary.update(
+        {
+            "test/mAP50": results.box.map50,
+            "test/mAP50-95": results.box.map,
+            "test/precision": results.box.mp,
+            "test/recall": results.box.mr,
+        }
+    )
+    wandb.finish()
