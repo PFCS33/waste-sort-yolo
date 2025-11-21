@@ -28,7 +28,7 @@ TRAIN_CONFIG = {
 def parse_args():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(
-        dest="mode", help="Available modes: train / test", required=True
+        dest="mode", help="Available modes: train / test / convert", required=True
     )
 
     # Train subparser
@@ -41,6 +41,10 @@ def parse_args():
     # Test subparser
     test_parser = subparsers.add_parser("test")
     test_parser.add_argument("run_name", type=str)
+
+    # Convert subparser
+    convert_parser = subparsers.add_parser("convert")
+    convert_parser.add_argument("--path", type=str, required=True, help="path to .pt file you want to convert")
 
     return parser.parse_args()
 
@@ -67,6 +71,14 @@ def main():
     elif args.mode == "test":
         # test
         test(args.run_name, TRAIN_CONFIG)
+    
+    elif args.mode == "convert":
+        # convert model to TensorFlow Lite
+        tflite_path = convert_to_tf(args.path)
+        if tflite_path:
+            print(f"Conversion successful! TFLite model saved at: {tflite_path}")
+        else:
+            print("Conversion failed!")
 
 
 if __name__ == "__main__":
