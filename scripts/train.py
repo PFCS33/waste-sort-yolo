@@ -4,7 +4,10 @@ import wandb
 from ultralytics import YOLO, settings
 
 
-def train(model, config):
+def train(model, config, pretrained_weight_path=None):
+    # load pretrained weight
+    if pretrained_weight_path is not None:
+        model.load(pretrained_weight_path)
     run_name = datetime.now().strftime("%Y%m%d_%H%M%S")
     # wandb init
     wandb.init(
@@ -13,7 +16,7 @@ def train(model, config):
         tags=config["tags"],
         config={
             "model_type": config["model"],
-            "pretrain_weight": config["model"],
+            "pretrain_weight": config["pretrained_weight"],
             "dataset": config["data_path"],
         },
     )
@@ -28,6 +31,13 @@ def train(model, config):
         workers=config["workers"],
         patience=config["patience"],
     )
+    metrics = {
+        "mAP50": results.results_dict["metrics/mAP50(B)"],
+        "mAP50-95": results.results_dict["metrics/mAP50-95(B)"],
+        "precision": results.results_dict["metrics/precision(B)"],
+        "recall": results.results_dict["metrics/recall(B)"],
+    }
+    wandb.summary.update(metrics)
 
     # finish wandb
     wandb.finish()
@@ -35,7 +45,7 @@ def train(model, config):
 
 
 def test(run_name, config):
-    wandb.init(project=config["project"], name=f"${run_name}_test", tags=test)
+    wandb.init(project=config["project"], name=f"${run_name}_test", tags="test")
     model_path = os.path.join(
         settings["runs_dir"], "detect", run_name, "weights", "best.pt"
     )

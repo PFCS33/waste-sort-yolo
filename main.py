@@ -7,7 +7,8 @@ from scripts.train import *
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TRAIN_CONFIG = {
     "project": "waste-sorting",
-    "model": os.path.join(
+    "model": "yolov8.yaml",
+    "pretrained_weight": os.path.join(
         ROOT_DIR, "weights", "yolov8n.pt"
     ),  # load pretrained COCO weights
     "tags": ["yolov8n", "baseline"],
@@ -30,7 +31,10 @@ def parse_args():
     )
 
     # Train subparser
-    subparsers.add_parser("train")
+    train_parser = subparsers.add_parser("train")
+    train_parser.add_argument(
+        "--run_name", type=str, help="Run name to load last.pt weights from"
+    )
 
     # Test subparser
     test_parser = subparsers.add_parser("test")
@@ -47,11 +51,16 @@ def main():
     set_settings(ROOT_DIR)
 
     if args.mode == "train":
+        # modify pretrained_weight if run_name provided
+        if args.run_name:
+            TRAIN_CONFIG["pretrained_weight"] = os.path.join(
+                ROOT_DIR, "detect", args.run_name, "weights", "last.pt"
+            )
+
         # model
         model = YOLO(TRAIN_CONFIG["model"])
-
         # train
-        train(model, TRAIN_CONFIG)
+        train(model, TRAIN_CONFIG, model_path=TRAIN_CONFIG["pretrained_weight"])
 
     elif args.mode == "test":
         # test
