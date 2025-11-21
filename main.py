@@ -7,7 +7,7 @@ from scripts.train import *
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TRAIN_CONFIG = {
     "project": "waste-sorting",
-    "model": "yolov8.yaml",
+    "model": "yolov8n.yaml",
     "pretrained_weight": os.path.join(
         ROOT_DIR, "weights", "yolov8n.pt"
     ),  # load pretrained COCO weights
@@ -15,7 +15,7 @@ TRAIN_CONFIG = {
     "data_path": os.path.join(
         ROOT_DIR, "data", "GARBAGE-CLASSIFICATION-3-2", "data.yaml"
     ),
-    "num_epochs": 50,
+    "num_epochs": 70,
     "batch_size": 16,
     "image_size": 640,
     "device": 0,  # GPU ID
@@ -54,13 +54,13 @@ def main():
         # modify pretrained_weight if run_name provided
         if args.run_name:
             TRAIN_CONFIG["pretrained_weight"] = os.path.join(
-                ROOT_DIR, "detect", args.run_name, "weights", "last.pt"
+                ROOT_DIR, "runs", "detect", args.run_name, "weights", "last.pt"
             )
 
         # model
         model = YOLO(TRAIN_CONFIG["model"])
         # train
-        train(model, TRAIN_CONFIG, model_path=TRAIN_CONFIG["pretrained_weight"])
+        train(model, TRAIN_CONFIG, weight_path=TRAIN_CONFIG["pretrained_weight"])
 
     elif args.mode == "test":
         # test

@@ -4,10 +4,10 @@ import wandb
 from ultralytics import YOLO, settings
 
 
-def train(model, config, pretrained_weight_path=None):
+def train(model, config, weight_path=None):
     # load pretrained weight
-    if pretrained_weight_path is not None:
-        model.load(pretrained_weight_path)
+    if weight_path is not None:
+        model.load(weight_path)
     run_name = datetime.now().strftime("%Y%m%d_%H%M%S")
     # wandb init
     wandb.init(
