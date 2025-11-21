@@ -30,6 +30,7 @@ def train(model, config, weight_path=None):
         device=config["device"],
         workers=config["workers"],
         patience=config["patience"],
+        # lr0=config["lr0"],
     )
     metrics = {
         "mAP50": results.results_dict["metrics/mAP50(B)"],
@@ -37,10 +38,12 @@ def train(model, config, weight_path=None):
         "precision": results.results_dict["metrics/precision(B)"],
         "recall": results.results_dict["metrics/recall(B)"],
     }
-    wandb.summary.update(metrics)
-
-    # finish wandb
-    wandb.finish()
+    print("\n" + "="*50)
+    print("Final Training Metrics:")
+    print("="*50)
+    for key, value in metrics.items():
+        print(f"{key}: {value:.4f}")
+    print("="*50 + "\n")
     return results
 
 
@@ -56,12 +59,9 @@ def test(run_name, config):
         imgsz=config["image_size"],
         device=config["device"],
     )
-    wandb.summary.update(
-        {
-            "test/mAP50": results.box.map50,
-            "test/mAP50-95": results.box.map,
-            "test/precision": results.box.mp,
-            "test/recall": results.box.mr,
-        }
-    )
-    wandb.finish()
+    print("\n" + "="*50)
+    print("Test Metrics:")
+    print("="*50)
+    for key, value in metrics.items():
+        print(f"{key}: {value:.4f}")
+    print("="*50 + "\n")

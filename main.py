@@ -15,12 +15,13 @@ TRAIN_CONFIG = {
     "data_path": os.path.join(
         ROOT_DIR, "data", "GARBAGE-CLASSIFICATION-3-2", "data.yaml"
     ),
-    "num_epochs": 70,
+    "num_epochs": 150,
     "batch_size": 16,
     "image_size": 640,
     "device": 0,  # GPU ID
     "workers": 8,
     "patience": 20,
+    # "lr0": 0.001
 }
 
 
@@ -35,6 +36,7 @@ def parse_args():
     train_parser.add_argument(
         "--run_name", type=str, help="Run name to load last.pt weights from"
     )
+    # python3 main.py train --run_name 
 
     # Test subparser
     test_parser = subparsers.add_parser("test")
