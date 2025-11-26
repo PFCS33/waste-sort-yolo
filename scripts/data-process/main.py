@@ -1,16 +1,15 @@
 import os
 import argparse
-from utils import download_all, load_config, transform_all, draw_label, count_images
+from utils import download_all, load_config, transform_all, merge_all, draw_label, count_images
 
 # path to config yaml file
 DATASET_CONFIG_PATH = "dataset-config.yaml"
-
 
 def process_all(config):
     """Process all steps: download and transform"""
     pass
     # download_all(config_path)
-    # transform_datasets(config_path)
+    # transform_all(config_path)
 
 
 def main():
@@ -28,6 +27,13 @@ def main():
     # Transform subparser
     transform_parser = subparsers.add_parser("transform", help="Transform datasets")
     transform_parser.add_argument(
+        "--config",
+        default=DATASET_CONFIG_PATH,
+        help="Path to configuration yaml file",
+    )
+    # Merge subparser
+    merge_parser = subparsers.add_parser("merge", help="Merge transformed datasets")
+    merge_parser.add_argument(
         "--config",
         default=DATASET_CONFIG_PATH,
         help="Path to configuration yaml file",
@@ -73,6 +79,8 @@ def main():
         download_all(config)
     elif args.mode == "transform":
         transform_all(config)
+    elif args.mode == "merge":
+        merge_all(config)
     elif args.mode == "all":
         process_all(config)
     elif args.mode == "test":

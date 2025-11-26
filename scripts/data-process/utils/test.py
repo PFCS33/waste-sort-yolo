@@ -1,0 +1,76 @@
+import os
+import cv2
+
+
+def draw_label(image_path, label_path):
+    # 1. read image and label(txt)
+    image = cv2.imread(image_path)
+    if image is None:
+        print(f"Error: Could not load image from {image_path}")
+        return
+
+    h, w = image.shape[:2]
+
+    try:
+        with open(label_path, "r") as f:
+            first_line = f.readline().strip()
+    except FileNotFoundError:
+        print(f"Error: Could not load label file from {label_path}")
+        return
+
+    # 2. draw bbox on image (follow the format that cls_id x_center ycenter width height)
+    if first_line:
+        parts = first_line.split()
+        if len(parts) != 5:
+            print(f"Error: Invalid label format in first line: {first_line}")
+            return
+
+        cls_id, x_center, y_center, width, height = map(float, parts)
+        x_center *= w
+        y_center *= h
+        width *= w
+        height *= h
+        x1 = int(x_center - width / 2)
+        y1 = int(y_center - height / 2)
+        x2 = int(x_center + width / 2)
+        y2 = int(y_center + height / 2)
+
+        # draw bbox
+        color = (0, 255, 0)
+        thickness = 2
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
+
+        # add class label
+        label_text = f"Class {int(cls_id)}"
+        cv2.putText(
+            image,
+            label_text,
+            (x1, y1 - 10),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.5,
+            color,
+            thickness,
+        )
+
+    # 3. show img with bbox
+    cv2.imshow("Image with Annotations", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+
+def count_images(image_dir):
+
+    if not os.path.exists(image_dir):
+        print(f"Error: Directory {image_dir} does not exist")
+        return 0
+
+    # Count image files
+    image_files = [
+        f
+        for f in os.listdir(image_dir)
+        if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"))
+    ]
+    count = len(image_files)
+
+    print(f"Total images in {image_dir}: {count}")
+    return count

@@ -4,6 +4,7 @@
 global:
   root_dir: "data2"
   target_format: "yolo"
+  custom_name: "which-bin"
   nc: 14
   classes:
     - METAL
