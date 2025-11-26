@@ -99,7 +99,17 @@ def merge_datasets(datasets, target_images, target_labels):
 
         print(f"  Processing {len(image_files)} images")
 
+        skipped_count = 0
         for image_file in image_files:
+            # Check if corresponding label exists first
+            label_file = os.path.splitext(image_file)[0] + ".txt"
+            old_label_path = os.path.join(labels_dir, label_file)
+            
+            if not os.path.exists(old_label_path):
+                print(f"Warning: Label not found for {image_file}, skipping...")
+                skipped_count += 1
+                continue
+
             # Copy image with new index
             old_image_path = os.path.join(images_dir, image_file)
             file_ext = os.path.splitext(image_file)[1]
@@ -108,21 +118,18 @@ def merge_datasets(datasets, target_images, target_labels):
             shutil.copy2(old_image_path, new_image_path)
 
             # Copy corresponding label
-            label_file = os.path.splitext(image_file)[0] + ".txt"
-            old_label_path = os.path.join(labels_dir, label_file)
             new_label_name = f"{current_index}.txt"
             new_label_path = os.path.join(target_labels, new_label_name)
-
-            if os.path.exists(old_label_path):
-                shutil.copy2(old_label_path, new_label_path)
-            else:
-                print(f"Warning: Label not found for {image_file}")
+            shutil.copy2(old_label_path, new_label_path)
 
             current_index += 1
 
-        merged_count = len(image_files)
+        merged_count = len(image_files) - skipped_count
         total_merged += merged_count
-        print(f"  ✓ Merged {merged_count} samples from {dataset['name']}")
+        if skipped_count > 0:
+            print(f"  ✓ Merged {merged_count} samples from {dataset['name']} (skipped {skipped_count} without labels)")
+        else:
+            print(f"  ✓ Merged {merged_count} samples from {dataset['name']}")
 
     print(f"Total samples merged: {total_merged}")
     return total_merged
