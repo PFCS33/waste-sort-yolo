@@ -1,0 +1,77 @@
+# WhichBin Datasets Configuration
+# Version: 1.0
+
+global:
+  root_dir: "data2"
+  target_format: "yolo"
+  nc: 14
+  classes:
+    - METAL
+    - GLASS
+    - PET_CONTAINER
+    - TDPE_CONTAINER
+    - PLASTIC_WRAPPER
+    - PLASTIC_BAG
+    - TETRAPAK
+    - NEWSPAPER
+    - CARDBOARD
+    - PAPER_CUP
+    - PAPER_BAG
+    - TISSUE
+    - STYROFOAM
+    - PAPER
+
+datasets:
+  - name: "drinking-waste"
+    download:
+      source: "kaggle"
+      params: ["arkadiyhacks/drinking-waste-classification"]
+    transform:
+      coordinate_transform: null
+      class_mapping:
+        0: 0
+        1: 1
+        2: 3
+        3: 2
+      paths:
+        - images: ["Images_of_Waste", "YOLO_imgs"]
+          labels: ["Images_of_Waste", "YOLO_imgs"]
+
+  - name: "Waste-Detection-2"
+    download:
+      source: "roboflow"
+      params: ["ecosifttrain", "waste-detection-ri1v4", 2, "yolov8"]
+    transform:
+      coordinate_transform: null
+      class_mapping:
+        0: 0
+        1: 3
+        2: 2
+        3: 4
+        4: 6
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+
+  - name: "Waste-Detection-7"
+    download:
+      source: "roboflow"
+      params: ["object-detection-cfmul", "waste-detection-0momv", 7, "yolov8"]
+    transform:
+      coordinate_transform: null
+      class_mapping:
+        0: 5
+        1: 1
+        2: 10
+        3: 2
+        4: 5
+        5: 0
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: 

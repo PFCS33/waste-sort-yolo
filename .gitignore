@@ -210,3 +210,5 @@ data/
 wandb/
 runs/
 CLAUDE.md
+data2/
+weights/
