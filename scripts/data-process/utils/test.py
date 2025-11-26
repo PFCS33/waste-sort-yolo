@@ -1,5 +1,6 @@
 import os
 import cv2
+from collections import defaultdict
 
 
 def draw_label(image_path, label_path):
@@ -74,3 +75,38 @@ def count_images(image_dir):
 
     print(f"Total images in {image_dir}: {count}")
     return count
+
+
+def print_distributions(merge_dir):
+    """print class distribution for each split"""
+    print("\n" + "=" * 50)
+    print("Final class distribution in each split:")
+    print("=" * 50)
+
+    for split_name in ["train", "val", "test"]:
+        split_labels = os.path.join(merge_dir, split_name, "labels")
+        label_files = [f for f in os.listdir(split_labels) if f.endswith(".txt")]
+        total_samples = len(label_files)
+
+        # Count all classes (not just primary)
+        class_counts = defaultdict(int)
+        for label_file in label_files:
+            label_path = os.path.join(split_labels, label_file)
+            try:
+                with open(label_path, "r") as f:
+                    classes_seen = set()
+                    for line in f:
+                        parts = line.strip().split()
+                        if len(parts) >= 1:
+                            cls_id = int(float(parts[0]))
+                            classes_seen.add(cls_id)
+                    for cls_id in classes_seen:
+                        class_counts[cls_id] += 1
+            except Exception:
+                continue
+
+        print(f"\n{split_name.upper()} ({total_samples} samples):")
+        for cls_id in sorted(class_counts.keys()):
+            count = class_counts[cls_id]
+            percentage = (count / total_samples) * 100 if total_samples > 0 else 0
+            print(f"  Class {cls_id}: {count} ({percentage:.1f}%)")

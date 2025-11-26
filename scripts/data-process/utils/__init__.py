@@ -5,7 +5,7 @@ from .transform import transform_all
 
 from .merge import merge_all
 
-from .test import draw_label, count_images
+from .test import draw_label, count_images, print_distributions
 
 # Expose all functions at package level
 __all__ = [
@@ -15,4 +15,5 @@ __all__ = [
     "merge_all",
     "draw_label",
     "count_images",
+    "print_distributions",
 ]
