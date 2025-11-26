@@ -2,47 +2,49 @@ import os
 import shutil
 import random
 from collections import defaultdict
+from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
+import numpy as np
 
 
 def merge_all(config, split=[0.8, 0.1, 0.1]):
     """
-    Merge all transformed datasets and split into train/val/test with balanced class distribution
-
-    Args:
-        config: Configuration dictionary
-        split: Split ratios for [train, val, test], default [0.8, 0.1, 0.1]
+    Merge all transformed datasets and split with multi-label stratification.
     """
     root_dir = config["global"]["root_dir"]
     custom_name = config["global"]["custom_name"]
 
+    # use num_classes from config if available
+    num_classes = config["global"]["nc"]
+
     print(f"Starting merge_all: merging datasets into {custom_name}")
 
-    # 1: find all transformed datasets
+    # 1: Collect transformed datasets
     transformed_datasets = collect_transformed_datasets(config)
     if not transformed_datasets:
         print("No transformed datasets found!")
         return
 
-    # 2: setup merge dir
+    # 2: Setup merge directory
     merge_dir = os.path.join(root_dir, custom_name)
     origin_dir = os.path.join(merge_dir, "origin")
     origin_images = os.path.join(origin_dir, "images")
     origin_labels = os.path.join(origin_dir, "labels")
-    # clean up old dir
+
     if os.path.exists(merge_dir):
-        print(f"Removing existing merge directory: {merge_dir}")
         shutil.rmtree(merge_dir)
     os.makedirs(origin_images, exist_ok=True)
     os.makedirs(origin_labels, exist_ok=True)
 
-    # 3: merge all datasets
+    # 3: Merge all datasets
     merge_datasets(transformed_datasets, origin_images, origin_labels)
 
-    # 4: analyze class distribution
-    class_distribution = analyze_class_distribution(origin_labels)
+    # 4: Analyze with multi-label awareness
+    sample_ids, class_matrix, class_counts = calc_class_distribution(
+        origin_labels, num_classes=num_classes
+    )
 
-    # 5: create balanced splits
-    balance_splits(merge_dir, origin_dir, class_distribution, split)
+    # 5: Create balanced splits using multi-label stratification
+    stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix, split)
 
     print(f"\n✓ Merge complete! Results saved in {merge_dir}")
 
@@ -104,7 +106,7 @@ def merge_datasets(datasets, target_images, target_labels):
             # Check if corresponding label exists first
             label_file = os.path.splitext(image_file)[0] + ".txt"
             old_label_path = os.path.join(labels_dir, label_file)
-            
+
             if not os.path.exists(old_label_path):
                 print(f"Warning: Label not found for {image_file}, skipping...")
                 skipped_count += 1
@@ -127,7 +129,9 @@ def merge_datasets(datasets, target_images, target_labels):
         merged_count = len(image_files) - skipped_count
         total_merged += merged_count
         if skipped_count > 0:
-            print(f"  ✓ Merged {merged_count} samples from {dataset['name']} (skipped {skipped_count} without labels)")
+            print(
+                f"  ✓ Merged {merged_count} samples from {dataset['name']} (skipped {skipped_count} without labels)"
+            )
         else:
             print(f"  ✓ Merged {merged_count} samples from {dataset['name']}")
 
@@ -135,12 +139,20 @@ def merge_datasets(datasets, target_images, target_labels):
     return total_merged
 
 
-def analyze_class_distribution(labels_dir):
-    """calculate class distribution in merged dataset, return rougth class assignment of each image"""
-    class_counts = defaultdict(int)
-    sample_classes = defaultdict(list)  # track which samples belong to each class
+def calc_class_distribution(labels_dir, num_classes=None):
+    """
+    Analyze class distribution and build multi-hot matrix for stratified splitting.
 
-    label_files = [f for f in os.listdir(labels_dir) if f.endswith(".txt")]
+    Returns:
+        sample_ids: [sample id]
+        class_matrix: np array, multi-hot encoding of (n_samples, n_classes)
+        class_counts: dict of {class_id: count}
+    """
+    label_files = sorted([f for f in os.listdir(labels_dir) if f.endswith(".txt")])
+
+    # find all classes and collect sample data
+    sample_cls_map = {}  # sample_id -> set of classes
+    all_classes = set()
 
     for label_file in label_files:
         label_path = os.path.join(labels_dir, label_file)
@@ -150,123 +162,169 @@ def analyze_class_distribution(labels_dir):
             with open(label_path, "r") as f:
                 lines = f.readlines()
 
-            sample_classes_set = set()
+            classes_per_sample = set()
             for line in lines:
                 parts = line.strip().split()
                 if len(parts) >= 1:
                     cls_id = int(float(parts[0]))
-                    sample_classes_set.add(cls_id)
+                    classes_per_sample.add(cls_id)
+                    all_classes.add(cls_id)
 
-            # for multi-class samples, assign to the first class found
-            if sample_classes_set:
-                primary_class = min(sample_classes_set)
-                class_counts[primary_class] += 1
-                sample_classes[primary_class].append(sample_id)
+            if classes_per_sample:
+                sample_cls_map[sample_id] = classes_per_sample
 
         except Exception as e:
             print(f"Error processing {label_file}: {e}")
             continue
 
-    print("Class distribution:")
-    total_samples = sum(class_counts.values())
+    # determine total number of classes
+    if num_classes is None:
+        num_classes = max(all_classes) + 1 if all_classes else 0
+
+    # Build multi-hot matrix for multi-class per sample case
+    sample_ids = list(sample_cls_map.keys())
+    class_matrix = np.zeros((len(sample_ids), num_classes), dtype=np.int8)
+
+    for i, sample_id in enumerate(sample_ids):
+        for cls_id in sample_cls_map[sample_id]:
+            if cls_id < num_classes:
+                class_matrix[i, cls_id] = 1
+
+    # calculate class counts
+    class_counts = defaultdict(int)
+    for cls_id in range(num_classes):
+        class_counts[cls_id] = int(class_matrix[:, cls_id].sum())
+
+    # Print distribution
+    print("\nClass distribution:")
+    sample_id_range = len(sample_ids)
     for cls_id in sorted(class_counts.keys()):
         count = class_counts[cls_id]
-        percentage = (count / total_samples) * 100 if total_samples > 0 else 0
-        print(f"  Class {cls_id}: {count} samples ({percentage:.1f}%)")
+        if count > 0:
+            percentage = (count / sample_id_range) * 100
+            print(f"  Class {cls_id}: {count} samples ({percentage:.1f}%)")
 
-    return dict(sample_classes)
+    return sample_ids, class_matrix, dict(class_counts)
 
 
-def balance_splits(merge_dir, origin_dir, sample_classes, split_ratios):
-    """create balanced train/val/test splits"""
-    train_ratio, val_ratio, _ = split_ratios
+def stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix, split):
+    """
+    create balanced train/val/test splits using multi-label stratification.
+
+    Args:
+        merge_dir: Output directory for splits
+        origin_dir: Source directory with merged images/labels
+        sample_ids: [sample id]
+        class_matrix: Multi-hot encoding matrix (n_samples, n_classes)
+        split: [train_ratio, val_ratio, test_ratio]
+    """
+    train_ratio, val_ratio, test_ratio = split
 
     # clean up old split directories
     for split_name in ["train", "val", "test"]:
         split_dir = os.path.join(merge_dir, split_name)
         if os.path.exists(split_dir):
-            print(f"Removing existing {split_name} directory: {split_dir}")
             shutil.rmtree(split_dir)
-
-    # create split directories
-    for split_name in ["train", "val", "test"]:
-        for subdir in ["images", "labels"]:
-            split_path = os.path.join(merge_dir, split_name, subdir)
-            os.makedirs(split_path, exist_ok=True)
+        os.makedirs(os.path.join(split_dir, "images"), exist_ok=True)
+        os.makedirs(os.path.join(split_dir, "labels"), exist_ok=True)
 
     origin_images = os.path.join(origin_dir, "images")
     origin_labels = os.path.join(origin_dir, "labels")
 
-    split_assignments = {"train": [], "val": [], "test": []}
+    sample_ids = np.array(sample_ids)
+    sample_id_range = np.arange(len(sample_ids))
 
-    # for each class, split samples proportionally
-    for cls_id, samples in sample_classes.items():
-        random.shuffle(samples)
-        n_samples = len(samples)
-        n_train = int(n_samples * train_ratio)
-        n_val = int(n_samples * val_ratio)
+    # train vs (val + test) split
+    temp_ratio = val_ratio + test_ratio
 
-        train_samples = samples[:n_train]
-        val_samples = samples[n_train : n_train + n_val]
-        test_samples = samples[n_train + n_val :]
+    msss1 = MultilabelStratifiedShuffleSplit(
+        n_splits=1, test_size=temp_ratio, random_state=42
+    )
+    train_idx, temp_idx = next(msss1.split(sample_id_range, class_matrix))
 
-        split_assignments["train"].extend(train_samples)
-        split_assignments["val"].extend(val_samples)
-        split_assignments["test"].extend(test_samples)
+    # val vs test split
+    relative_test_ratio = test_ratio / temp_ratio
 
+    msss2 = MultilabelStratifiedShuffleSplit(
+        n_splits=1, test_size=relative_test_ratio, random_state=42
+    )
+    val_idx_relative, test_idx_relative = next(
+        msss2.split(temp_idx, class_matrix[temp_idx])
+    )
 
-    # move files to appropriate split dir
-    for split_name, sample_ids in split_assignments.items():
-        print(f"\nMoving {len(sample_ids)} samples to {split_name}...")
+    # convert relative indices back to absolute
+    val_idx = temp_idx[val_idx_relative]
+    test_idx = temp_idx[test_idx_relative]
+
+    split_assignments = {
+        "train": sample_ids[train_idx].tolist(),
+        "val": sample_ids[val_idx].tolist(),
+        "test": sample_ids[test_idx].tolist(),
+    }
+
+    # Move files to appropriate split directories
+    for split_name, sample_list in split_assignments.items():
+        print(f"\nMoving {len(sample_list)} samples to {split_name}...")
 
         target_images = os.path.join(merge_dir, split_name, "images")
         target_labels = os.path.join(merge_dir, split_name, "labels")
 
-        for sample_id in sample_ids:
-            # move image
+        for sample_id in sample_list:
+            # Move image
             for ext in [".jpg", ".jpeg", ".png"]:
                 origin_img_path = os.path.join(origin_images, f"{sample_id}{ext}")
                 if os.path.exists(origin_img_path):
-                    target_img_path = os.path.join(target_images, f"{sample_id}{ext}")
-                    shutil.move(origin_img_path, target_img_path)
+                    shutil.move(
+                        origin_img_path,
+                        os.path.join(target_images, f"{sample_id}{ext}"),
+                    )
                     break
 
-            # move label
+            # Move label
             origin_label_path = os.path.join(origin_labels, f"{sample_id}.txt")
             if os.path.exists(origin_label_path):
-                target_label_path = os.path.join(target_labels, f"{sample_id}.txt")
-                shutil.move(origin_label_path, target_label_path)
+                shutil.move(
+                    origin_label_path, os.path.join(target_labels, f"{sample_id}.txt")
+                )
 
     # Clean up origin directory
     if os.path.exists(origin_dir):
         shutil.rmtree(origin_dir)
-        print("Cleaned up temporary origin directory")
 
-    # Print class distribution in each split
-    print("\nClass distribution in each split:")
+    # Print final distribution per split
+    print_split_distributions(merge_dir)
+
+
+def print_split_distributions(merge_dir):
+    """print class distribution for each split"""
+    print("\n" + "=" * 50)
+    print("Final class distribution in each split:")
+    print("=" * 50)
+
     for split_name in ["train", "val", "test"]:
         split_labels = os.path.join(merge_dir, split_name, "labels")
-        split_class_counts = defaultdict(int)
-        
         label_files = [f for f in os.listdir(split_labels) if f.endswith(".txt")]
         total_samples = len(label_files)
-        
-        # Count classes in this split
+
+        # Count all classes (not just primary)
+        class_counts = defaultdict(int)
         for label_file in label_files:
             label_path = os.path.join(split_labels, label_file)
             try:
                 with open(label_path, "r") as f:
-                    lines = f.readlines()
-                if lines:
-                    first_line = lines[0].strip().split()
-                    if len(first_line) >= 1:
-                        cls_id = int(float(first_line[0]))
-                        split_class_counts[cls_id] += 1
+                    classes_seen = set()
+                    for line in f:
+                        parts = line.strip().split()
+                        if len(parts) >= 1:
+                            cls_id = int(float(parts[0]))
+                            classes_seen.add(cls_id)
+                    for cls_id in classes_seen:
+                        class_counts[cls_id] += 1
             except Exception:
                 continue
-        
-        print(f"  {split_name} ({total_samples} samples):")
-        for cls_id in sorted(split_class_counts.keys()):
-            count = split_class_counts[cls_id]
+
+        print(f"\n{split_name.upper()} ({total_samples} samples):")
+        for cls_id in sorted(class_counts.keys()):
+            count = class_counts[cls_id]
             percentage = (count / total_samples) * 100 if total_samples > 0 else 0
-            print(f"    Class {cls_id}: {count} samples ({percentage:.1f}%)")
+            print(f"  Class {cls_id}: {count} ({percentage:.1f}%)")
