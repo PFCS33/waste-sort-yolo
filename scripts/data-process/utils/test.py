@@ -77,11 +77,18 @@ def count_images(image_dir):
     return count
 
 
-def print_distributions(merge_dir):
+def print_distributions(merge_dir, config):
     """print class distribution for each split"""
     print("\n" + "=" * 50)
     print("Final class distribution in each split:")
     print("=" * 50)
+    
+    # Read class names from config
+    class_names = {}
+    if config and "global" in config and "classes" in config["global"]:
+        classes_list = config["global"]["classes"]
+        for i, class_name in enumerate(classes_list):
+            class_names[i] = class_name
 
     for split_name in ["train", "val", "test"]:
         split_labels = os.path.join(merge_dir, split_name, "labels")
@@ -109,4 +116,7 @@ def print_distributions(merge_dir):
         for cls_id in sorted(class_counts.keys()):
             count = class_counts[cls_id]
             percentage = (count / total_samples) * 100 if total_samples > 0 else 0
-            print(f"  Class {cls_id}: {count} ({percentage:.1f}%)")
+            
+            # Get class name or use fallback
+            class_name = class_names.get(cls_id, "?")
+            print(f"  Class {cls_id} ({class_name}): {count} ({percentage:.1f}%)")

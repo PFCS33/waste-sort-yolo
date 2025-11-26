@@ -112,7 +112,7 @@ def main():
             if not args.merge_dir:
                 print("Error: distribution requires --merge_dir")
                 return
-            print_distributions(args.merge_dir)
+            print_distributions(args.merge_dir, config)
 
 
 if __name__ == "__main__":

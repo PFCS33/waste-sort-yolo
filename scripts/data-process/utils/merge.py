@@ -47,6 +47,9 @@ def merge_all(config, split=[0.8, 0.1, 0.1]):
     # 5: Create balanced splits using multi-label stratification
     stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix, split)
 
+    # 6. Print final distribution per split
+    print_distributions(merge_dir, config)
+
     print(f"\n✓ Merge complete! Results saved in {merge_dir}")
 
 
@@ -292,7 +295,5 @@ def stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix
     if os.path.exists(origin_dir):
         shutil.rmtree(origin_dir)
 
-    # Print final distribution per split
-    print_distributions(merge_dir)
 
 
