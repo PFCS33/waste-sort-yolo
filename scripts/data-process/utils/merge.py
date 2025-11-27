@@ -4,6 +4,7 @@ import random
 from collections import defaultdict
 from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
 import numpy as np
+import yaml
 from .test import print_distributions
 
 
@@ -61,6 +62,9 @@ def merge_all(config):
     except Exception as e:
         print(f"\nError saving class distribution: {e}")
 
+    # 7. Generate data.yaml for YOLO
+    generate_yolo_data_yaml(merge_dir, config)
+    
     print(f"\n✓ Merge complete! Results saved in {merge_dir}")
 
 
@@ -311,3 +315,50 @@ def stratified_multilabel_splits(
     # Clean up origin directory
     if os.path.exists(origin_dir):
         shutil.rmtree(origin_dir)
+
+
+def generate_yolo_data_yaml(merge_dir, config):
+    """
+    Generate data.yaml file for Ultralytics YOLO training.
+    
+    Args:
+        merge_dir: Directory containing train/val/test splits
+        config: Configuration dictionary containing class names and other settings
+    """
+    try:
+        # Extract configuration
+        class_names = config["global"]["classes"]
+        num_classes = config["global"]["nc"]
+        dataset_name = config["global"]["custom_name"]
+        
+        # Verify directories exist (using relative paths from merge_dir)
+        missing_dirs = []
+        for split_name in ["train", "val", "test"]:
+            split_path = os.path.join(merge_dir, split_name, "images")
+            if not os.path.exists(split_path):
+                missing_dirs.append(split_name)
+        
+        if missing_dirs:
+            print(f"Warning: Missing split directories: {missing_dirs}")
+        
+        # Create data.yaml content with relative paths
+        data_yaml = {
+            "train": "train/images",  # Relative paths
+            "val": "val/images",      
+            "test": "test/images",    
+            "nc": num_classes,        # Number of classes
+            "names": class_names      # Class names list
+        }
+        
+        # Write data.yaml file
+        yaml_path = os.path.join(merge_dir, "data.yaml")
+        with open(yaml_path, 'w') as f:
+            yaml.dump(data_yaml, f, default_flow_style=False, sort_keys=False)
+        
+        print(f"\n✓ Generated data.yaml for YOLO: {yaml_path}")
+    
+        
+    except Exception as e:
+        print(f"\nError generating data.yaml: {e}")
+        import traceback
+        traceback.print_exc()
