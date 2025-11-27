@@ -5,24 +5,23 @@ global:
   root_dir: "data2"
   target_format: "yolo"
   custom_name: "which-bin"
-  nc: 15
+  nc: 14
   split: [0.8, 0.1, 0.1] # [train, val, test]
   classes:
-    - ALU_CAN
+    - METAL
     - GLASS
     - PET_CONTAINER
     - TDPE_CONTAINER
     - PLASTIC_WRAPPER
     - PLASTIC_BAG
     - TETRAPAK
-    - NEWSPAPER
+    - PAPER
     - CARDBOARD
     - PAPER_CUP
     - PAPER_BAG
-    - TISSUE
+    - USED_TISSUE
     - STYROFOAM
-    - PAPER
-    - OTHER_METAL
+    - PLASTIC_CUP
 
 datasets:
   - name: "drinking-waste"
@@ -86,14 +85,122 @@ datasets:
       params: ["corderoearl", "waste-detect-y8oeh", 3, "yolov8"]
     transform:
       coordinate_transform: null
-      exclude_class: [0, 1]
+      exclude_class: [0, 2, 6, 7]
       class_mapping:
-        0: 5
+        1: 8
+        3: 1
+        4: 7
+        5: 7
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "Waste Segregation Computer Vision Dataset"
+    download:
+      source: "roboflow"
+      params: ["yolov5-6agzx", "waste-segregation-rbick", 7, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: [0, 1, 2, 4, 5, 8, 9, 11, 12 ]
+      class_mapping:
+        3: 7
+        6: 1
+        7: 4
+        10: 13
+        13: 12
+        14: 11
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "trash classification Computer Vision Model"
+    download:
+      source: "roboflow"
+      params: ["povs-xcjer", "trash-classification-5nhrf", 5, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class:
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          10,
+          11,
+          12,
+          15,
+          16,
+          18,
+          19,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+        ]
+      class_mapping:
+        5: 8
+        9: 0
+        13: 0
+        14: 0
+        17: 7
+        20: 4
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "garbage Computer Vision Model"
+    download:
+      source: "roboflow"
+      params: ["abc-kgrzw", "garbage-5hv3d", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: [3, 4, 5 ]
+      class_mapping:
+        0: 8
         1: 1
-        2: 10
-        3: 2
-        4: 5
-        5: 0
+        2: 0
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "Paper Computer Vision Dataset"
+    download:
+      source: "roboflow"
+      params: ["trashdetection-bhjmn", "paper-2jpbv", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 7
       paths:
         - images: ["train", "images"]
           labels: ["train", "labels"]
