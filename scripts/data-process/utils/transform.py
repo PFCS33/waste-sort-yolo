@@ -21,7 +21,6 @@ def transform_all(config):
             continue
 
         print(f"\nTransforming dataset: {dataset_name}")
-        print(f"Dataset root: {dataset_root}")
 
         # Delete old transformed directory if it exists
         transformed_dir = os.path.join(dataset_root, "transformed")
@@ -122,22 +121,14 @@ def transform(
             continue
 
         print(f"\nProcessing source pair {i+1}/{len(normalized_pairs)}")
-        print(f"  Images: {images_dir}")
-        print(f"  Labels: {labels_dir}")
 
         # build excluded image names set for this source pair
-        excluded_image_names = build_excluded_image_names(
-            labels_dir, exclude_classes
-        )
+        excluded_image_names = build_excluded_image_names(labels_dir, exclude_classes)
 
-        print(
-            f"Transforming images from {images_dir} (starting at index {current_index})..."
-        )
         rename_mapping, next_index, excluded_count = image_transform(
             images_dir, images_target, current_index, excluded_image_names
         )
 
-        print(f"Transforming labels from {labels_dir}...")
         label_transform(
             labels_dir,
             labels_target,
@@ -152,16 +143,12 @@ def transform(
         total_excluded += excluded_count
         current_index = next_index
 
-        print(f"Processed {processed_count} files from this source pair")
-
     print(f"\nTransformation complete! Processed {total_processed} total files.")
     if total_excluded > 0:
         print(
             f"Excluded {total_excluded} files containing forbidden classes: {list(exclude_classes)}"
         )
     print(f"Results saved in {transformed_dir}")
-    print(f"- Images: {images_target}")
-    print(f"- Labels: {labels_target}")
 
 
 def image_transform(source, target, start_index=0, excluded_image_names=None):
@@ -227,9 +214,6 @@ def image_transform(source, target, start_index=0, excluded_image_names=None):
     with open(mapping_path, "w") as f:
         json.dump(batch_info, f, indent=2)
 
-    print(
-        f"Copied and renamed {len(image_files)} images from {source} to {target} (indices {start_index}-{next_index-1})"
-    )
     print(f"Saved rename mapping to {mapping_path}")
     return rename_mapping, next_index, excluded_count
 
@@ -295,9 +279,11 @@ def label_transform(
         for line in lines:
             parts = line.strip().split()
             if len(parts) != 5:
-                continue
-
-            cls_id, x_center, y_center, width, height = map(float, parts)
+                # convert polygon
+                cls_id = float(parts[0])
+                x_center, y_center, width, height = polygon_to_yolo_bbox([float(p) for p in parts[1:]])
+            else:
+                cls_id, x_center, y_center, width, height = map(float, parts)
 
             # 3. class mapping
             if cls_mapping and int(cls_id) in cls_mapping:
@@ -317,15 +303,25 @@ def label_transform(
         with open(target_path, "w") as f:
             f.writelines(transformed_lines)
 
-    if excluded_image_names and excluded_labels_count > 0:
-        print(
-            f"Transformed {len(txt_files)} label files from {source} to {target} (excluded {excluded_labels_count} labels)"
-        )
-    else:
-        print(f"Transformed {len(txt_files)} label files from {source} to {target}")
-
 
 def coord_transform(x_center, y_center, width, height):
+     return x_center, y_center, width, height
+
+
+
+def polygon_to_yolo_bbox(polygon):
+    """Convert polygon points to YOLO bbox format."""
+    xs = polygon[0::2]  # Even indices: x coordinates
+    ys = polygon[1::2]  # Odd indices: y coordinates
+
+    x_min, x_max = min(xs), max(xs)
+    y_min, y_max = min(ys), max(ys)
+
+    x_center = (x_min + x_max) / 2
+    y_center = (y_min + y_max) / 2
+    width = x_max - x_min
+    height = y_max - y_min
+
     return x_center, y_center, width, height
 
 

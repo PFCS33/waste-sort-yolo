@@ -18,7 +18,7 @@ def merge_all(config):
     num_classes = config["global"]["nc"]
     print(f"Starting merge_all: merging datasets into {custom_name}")
 
-    split = config['global']['split']
+    split = config["global"]["split"]
 
     # 1: Collect transformed datasets
     transformed_datasets = collect_transformed_datasets(config)
@@ -41,8 +41,9 @@ def merge_all(config):
     merge_datasets(transformed_datasets, origin_images, origin_labels)
 
     # 4: Analyze with multi-label awareness
+    class_names = config["global"]["classes"]
     sample_ids, class_matrix, class_counts = calc_class_distribution(
-        origin_labels, num_classes=num_classes
+        origin_labels, num_classes=num_classes, class_names=class_names
     )
 
     # 5: Create balanced splits using multi-label stratification
@@ -144,7 +145,7 @@ def merge_datasets(datasets, target_images, target_labels):
     return total_merged
 
 
-def calc_class_distribution(labels_dir, num_classes=None):
+def calc_class_distribution(labels_dir, num_classes=None, class_names=None):
     """
     Analyze class distribution and build multi-hot matrix for stratified splitting.
 
@@ -153,6 +154,9 @@ def calc_class_distribution(labels_dir, num_classes=None):
         class_matrix: np array, multi-hot encoding of (n_samples, n_classes)
         class_counts: dict of {class_id: count}
     """
+    class_names_map = {}
+    for i, class_name in enumerate(class_names):
+        class_names_map[i] = class_name
     label_files = sorted([f for f in os.listdir(labels_dir) if f.endswith(".txt")])
 
     # find all classes and collect sample data
@@ -207,12 +211,15 @@ def calc_class_distribution(labels_dir, num_classes=None):
         count = class_counts[cls_id]
         if count > 0:
             percentage = (count / sample_id_range) * 100
-            print(f"  Class {cls_id}: {count} samples ({percentage:.1f}%)")
+            class_name = class_names_map.get(cls_id, "?")
+            print(f"  Class {cls_id} ({class_name}): {count} samples ({percentage:.1f}%)")
 
     return sample_ids, class_matrix, dict(class_counts)
 
 
-def stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix, split):
+def stratified_multilabel_splits(
+    merge_dir, origin_dir, sample_ids, class_matrix, split
+):
     """
     create balanced train/val/test splits using multi-label stratification.
 
@@ -295,6 +302,3 @@ def stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix
     # Clean up origin directory
     if os.path.exists(origin_dir):
         shutil.rmtree(origin_dir)
-
-
-
