@@ -7,7 +7,7 @@ import numpy as np
 from .test import print_distributions
 
 
-def merge_all(config, split=[0.8, 0.1, 0.1]):
+def merge_all(config):
     """
     Merge all transformed datasets and split with multi-label stratification.
     """
@@ -16,8 +16,9 @@ def merge_all(config, split=[0.8, 0.1, 0.1]):
 
     # use num_classes from config if available
     num_classes = config["global"]["nc"]
-
     print(f"Starting merge_all: merging datasets into {custom_name}")
+
+    split = config['global']['split']
 
     # 1: Collect transformed datasets
     transformed_datasets = collect_transformed_datasets(config)

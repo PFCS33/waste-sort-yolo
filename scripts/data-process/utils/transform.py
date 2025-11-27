@@ -32,6 +32,7 @@ def transform_all(config):
         # Extract transform parameters
         cls_mapping = transform_config.get("class_mapping", {})
         coord_transform = transform_config.get("coordinate_transform")
+        exclude_class = transform_config.get("exclude_class")
         paths_config = transform_config.get("paths", [])
 
         if not paths_config:
@@ -55,15 +56,27 @@ def transform_all(config):
             print(f"No valid source pairs found for dataset: {dataset_name}")
             continue
 
+        exclude_class_set = set(exclude_class) if exclude_class else None
         try:
-            # Call the existing transform function
-            transform(dataset_root, source_pairs, cls_mapping, coord_transform)
+            transform(
+                dataset_root,
+                source_pairs,
+                cls_mapping,
+                coord_transform,
+                exclude_class_set,
+            )
             print(f"✓ Successfully transformed {dataset_name}")
         except Exception as e:
             print(f"✗ Failed to transform {dataset_name}: {e}")
 
 
-def transform(dataset_root, source_pairs, cls_mapping, coord_transform=None):
+def transform(
+    dataset_root,
+    source_pairs,
+    cls_mapping,
+    coord_transform=None,
+    exclude_classes=None,
+):
     # read all files from image/label directory pairs
     # 1. for images, call image_transform, move it to transformed/images with continuous numbering
     # 2. for txt(label), call label_transform: transform each label, and move it under transformed/labels
@@ -94,6 +107,7 @@ def transform(dataset_root, source_pairs, cls_mapping, coord_transform=None):
 
     current_index = 0
     total_processed = 0
+    total_excluded = 0
 
     for i, source_pair in enumerate(normalized_pairs):
         images_dir = source_pair["images"]
@@ -111,46 +125,81 @@ def transform(dataset_root, source_pairs, cls_mapping, coord_transform=None):
         print(f"  Images: {images_dir}")
         print(f"  Labels: {labels_dir}")
 
+        # build excluded image names set for this source pair
+        excluded_image_names = build_excluded_image_names(
+            labels_dir, exclude_classes
+        )
+
         print(
             f"Transforming images from {images_dir} (starting at index {current_index})..."
         )
-        rename_mapping, next_index = image_transform(
-            images_dir, images_target, current_index
+        rename_mapping, next_index, excluded_count = image_transform(
+            images_dir, images_target, current_index, excluded_image_names
         )
 
         print(f"Transforming labels from {labels_dir}...")
         label_transform(
-            labels_dir, labels_target, cls_mapping, coord_transform, rename_mapping
+            labels_dir,
+            labels_target,
+            cls_mapping,
+            coord_transform,
+            rename_mapping,
+            excluded_image_names,
         )
 
         processed_count = next_index - current_index
         total_processed += processed_count
+        total_excluded += excluded_count
         current_index = next_index
 
         print(f"Processed {processed_count} files from this source pair")
 
     print(f"\nTransformation complete! Processed {total_processed} total files.")
+    if total_excluded > 0:
+        print(
+            f"Excluded {total_excluded} files containing forbidden classes: {list(exclude_classes)}"
+        )
     print(f"Results saved in {transformed_dir}")
     print(f"- Images: {images_target}")
     print(f"- Labels: {labels_target}")
 
 
-def image_transform(source, target, start_index=0):
+def image_transform(source, target, start_index=0, excluded_image_names=None):
     if not os.path.exists(source):
         print(f"Error: Source directory {source} does not exist")
-        return [], start_index
+        return [], start_index, 0
 
     os.makedirs(target, exist_ok=True)
 
     # get all image files and sort them for consistent order
-    image_files = [
+    all_image_files = [
         f for f in os.listdir(source) if f.lower().endswith((".jpg", ".jpeg", ".png"))
     ]
-    image_files.sort()
+    all_image_files.sort()
+
+    # Filter out excluded images if exclusion set provided
+    if excluded_image_names:
+        image_files = []
+        excluded_count = 0
+        for img_file in all_image_files:
+            img_base_name = os.path.splitext(img_file)[0]
+            if img_base_name in excluded_image_names:
+                excluded_count += 1
+                print(f"  Excluding {img_file} (contains excluded class)")
+            else:
+                image_files.append(img_file)
+    else:
+        image_files = all_image_files
+        excluded_count = 0
 
     if len(image_files) == 0:
-        print(f"No image files found in {source}")
-        return [], start_index
+        if excluded_count > 0:
+            print(
+                f"No valid image files found in {source} (all {excluded_count} images excluded)"
+            )
+        else:
+            print(f"No image files found in {source}")
+        return [], start_index, excluded_count
 
     rename_mapping = []
     for i, old_filename in enumerate(image_files):
@@ -183,11 +232,16 @@ def image_transform(source, target, start_index=0):
         f"Copied and renamed {len(image_files)} images from {source} to {target} (indices {start_index}-{next_index-1})"
     )
     print(f"Saved rename mapping to {mapping_path}")
-    return rename_mapping, next_index
+    return rename_mapping, next_index, excluded_count
 
 
 def label_transform(
-    source, target, cls_mapping, coord_transform=None, rename_mapping=None
+    source,
+    target,
+    cls_mapping,
+    coord_transform=None,
+    rename_mapping=None,
+    excluded_image_names=None,
 ):
     if not os.path.exists(source):
         print(f"Error: Source directory {source} does not exist")
@@ -196,8 +250,23 @@ def label_transform(
     os.makedirs(target, exist_ok=True)
 
     # 1. read all txt files under source/, with consistent processing order of images
-    txt_files = [f for f in os.listdir(source) if f.endswith(".txt")]
-    txt_files.sort()
+    all_txt_files = [f for f in os.listdir(source) if f.endswith(".txt")]
+    all_txt_files.sort()
+
+    # Filter out excluded labels if exclusion set provided
+    if excluded_image_names:
+        txt_files = []
+        excluded_labels_count = 0
+        for txt_file in all_txt_files:
+            txt_base_name = os.path.splitext(txt_file)[0]
+            if txt_base_name in excluded_image_names:
+                excluded_labels_count += 1
+                # Skip this label file as its corresponding image was excluded
+            else:
+                txt_files.append(txt_file)
+    else:
+        txt_files = all_txt_files
+        excluded_labels_count = 0
 
     # create mapping from image basenames to new names for label renaming
     label_rename_map = {}
@@ -249,8 +318,50 @@ def label_transform(
         with open(target_path, "w") as f:
             f.writelines(transformed_lines)
 
-    print(f"Transformed {len(txt_files)} label files from {source} to {target}")
+    if excluded_image_names and excluded_labels_count > 0:
+        print(
+            f"Transformed {len(txt_files)} label files from {source} to {target} (excluded {excluded_labels_count} labels)"
+        )
+    else:
+        print(f"Transformed {len(txt_files)} label files from {source} to {target}")
 
 
 def coord_transform(x_center, y_center, width, height):
     return x_center, y_center, width, height
+
+
+def build_excluded_image_names(labels_dir, exclude_classes=None):
+    """Scan labels directory and build set of image names that contain excluded classes"""
+    if not exclude_classes or not os.path.exists(labels_dir):
+        return set()
+    excluded_image_names = set()
+
+    # Get all label files
+    label_files = [f for f in os.listdir(labels_dir) if f.endswith(".txt")]
+
+    for label_file in label_files:
+        label_path = os.path.join(labels_dir, label_file)
+
+        try:
+            with open(label_path, "r") as f:
+                lines = f.readlines()
+
+            # Check if any line contains excluded class
+            has_excluded = False
+            for line in lines:
+                parts = line.strip().split()
+                if len(parts) >= 1:
+                    cls_id = int(float(parts[0]))
+                    if cls_id in exclude_classes:
+                        has_excluded = True
+                        break
+
+            if has_excluded:
+                # Get corresponding image name (without .txt extension)
+                image_base_name = os.path.splitext(label_file)[0]
+                excluded_image_names.add(image_base_name)
+
+        except Exception:
+            continue  # Skip problematic label files
+
+    return excluded_image_names

@@ -5,9 +5,10 @@ global:
   root_dir: "data2"
   target_format: "yolo"
   custom_name: "which-bin"
-  nc: 14
+  nc: 15
+  split: [0.8, 0.1, 0.1] # [train, val, test]
   classes:
-    - METAL
+    - ALU_CAN
     - GLASS
     - PET_CONTAINER
     - TDPE_CONTAINER
@@ -21,6 +22,7 @@ global:
     - TISSUE
     - STYROFOAM
     - PAPER
+    - OTHER_METAL
 
 datasets:
   - name: "drinking-waste"
@@ -29,6 +31,7 @@ datasets:
       params: ["arkadiyhacks/drinking-waste-classification"]
     transform:
       coordinate_transform: null
+      exclude_class: null
       class_mapping:
         0: 0
         1: 1
@@ -44,6 +47,7 @@ datasets:
       params: ["ecosifttrain", "waste-detection-ri1v4", 2, "yolov8"]
     transform:
       coordinate_transform: null
+      exclude_class: null
       class_mapping:
         0: 0
         1: 3
@@ -60,6 +64,7 @@ datasets:
       params: ["object-detection-cfmul", "waste-detection-0momv", 7, "yolov8"]
     transform:
       coordinate_transform: null
+      exclude_class: null
       class_mapping:
         0: 5
         1: 1
@@ -75,4 +80,24 @@ datasets:
         - images: ["valid", "images"]
           labels: ["valid", "labels"]
 
-  - name: 
+  - name: "Waste Detect Computer Vision Model"
+    download:
+      source: "roboflow"
+      params: ["corderoearl", "waste-detect-y8oeh", 3, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: [0, 1]
+      class_mapping:
+        0: 5
+        1: 1
+        2: 10
+        3: 2
+        4: 5
+        5: 0
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
