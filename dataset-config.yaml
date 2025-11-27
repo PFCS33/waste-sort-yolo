@@ -43,7 +43,7 @@ datasets:
   - name: "Waste-Detection-2"
     download:
       source: "roboflow"
-      params: ["ecosifttrain", "waste-detection-ri1v4", 2, "yolov8"]
+      params: ["waste1-qbkab", "waste-detection-ri1v4-u7ajh", 1, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: null
@@ -60,17 +60,16 @@ datasets:
   - name: "Waste-Detection-7"
     download:
       source: "roboflow"
-      params: ["object-detection-cfmul", "waste-detection-0momv", 7, "yolov8"]
+      params: ["waste1-qbkab", "waste-detection-0momv-jyyb2", 1, "yolov8"]
     transform:
       coordinate_transform: null
-      exclude_class: null
+      exclude_class: [5]
       class_mapping:
         0: 5
         1: 1
         2: 10
         3: 2
         4: 5
-        5: 0
       paths:
         - images: ["train", "images"]
           labels: ["train", "labels"]
@@ -82,7 +81,7 @@ datasets:
   - name: "Waste Detect Computer Vision Model"
     download:
       source: "roboflow"
-      params: ["corderoearl", "waste-detect-y8oeh", 3, "yolov8"]
+      params: ["waste1-qbkab", "waste-detect-y8oeh-wb0gu", 1, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: [0, 2, 6, 7]
@@ -102,10 +101,10 @@ datasets:
   - name: "Waste Segregation Computer Vision Dataset"
     download:
       source: "roboflow"
-      params: ["yolov5-6agzx", "waste-segregation-rbick", 7, "yolov8"]
+      params: ["waste1-qbkab", "waste-segregation-rbick-drzuw", 1, "yolov8"]
     transform:
       coordinate_transform: null
-      exclude_class: [0, 1, 2, 4, 5, 8, 9, 11, 12 ]
+      exclude_class: [0, 1, 2, 4, 5, 8, 9, 11, 12]
       class_mapping:
         3: 7
         6: 1
@@ -124,7 +123,7 @@ datasets:
   - name: "trash classification Computer Vision Model"
     download:
       source: "roboflow"
-      params: ["povs-xcjer", "trash-classification-5nhrf", 5, "yolov8"]
+      params: ["waste1-qbkab", "trash-classification-5nhrf-4i6vb", 1, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class:
@@ -179,7 +178,7 @@ datasets:
       params: ["abc-kgrzw", "garbage-5hv3d", 1, "yolov8"]
     transform:
       coordinate_transform: null
-      exclude_class: [3, 4, 5 ]
+      exclude_class: [3, 4, 5]
       class_mapping:
         0: 8
         1: 1
@@ -201,6 +200,45 @@ datasets:
       exclude_class: null
       class_mapping:
         0: 7
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "Recycled Materials"
+    download:
+      source: "roboflow"
+      params: ["waste1-qbkab", "recycled-materials-ebcoa-rk06c-jxpbo", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: [4, 5]
+      class_mapping:
+        0: 8
+        1: 7
+        2: 4
+        3: 9
+        6: 13
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+
+  - name: "styrofoam"
+    download:
+      source: "roboflow"
+      params: ["waste1-qbkab", "styrofoam-qt1kt-rygxv", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 12
       paths:
         - images: ["train", "images"]
           labels: ["train", "labels"]
