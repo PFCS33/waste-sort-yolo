@@ -185,7 +185,6 @@ def image_transform(source, target, start_index=0, excluded_image_names=None):
             img_base_name = os.path.splitext(img_file)[0]
             if img_base_name in excluded_image_names:
                 excluded_count += 1
-                print(f"  Excluding {img_file} (contains excluded class)")
             else:
                 image_files.append(img_file)
     else:
