@@ -49,8 +49,17 @@ def merge_all(config):
     # 5: Create balanced splits using multi-label stratification
     stratified_multilabel_splits(merge_dir, origin_dir, sample_ids, class_matrix, split)
 
-    # 6. Print final distribution per split
-    print_distributions(merge_dir, config)
+    # 6. Print final distribution per split and save to file
+    distribution_text = print_distributions(merge_dir, config)
+    
+    # Save distribution to txt file
+    distribution_file = os.path.join(merge_dir, "class_distribution.txt")
+    try:
+        with open(distribution_file, "w") as f:
+            f.write(distribution_text)
+        print(f"\n✓ Class distribution saved to: {distribution_file}")
+    except Exception as e:
+        print(f"\nError saving class distribution: {e}")
 
     print(f"\n✓ Merge complete! Results saved in {merge_dir}")
 

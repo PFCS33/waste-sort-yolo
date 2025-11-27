@@ -78,7 +78,7 @@ def count_images(image_dir):
 
 
 def print_distributions(merge_dir, config):
-    """print class distribution for each split"""
+    """print class distribution for each split and return the distribution data"""
     print("\n" + "=" * 50)
     print("Final class distribution in each split:")
     print("=" * 50)
@@ -89,6 +89,12 @@ def print_distributions(merge_dir, config):
         classes_list = config["global"]["classes"]
         for i, class_name in enumerate(classes_list):
             class_names[i] = class_name
+
+    # Prepare content for return
+    output_lines = []
+    output_lines.append("=" * 50)
+    output_lines.append("Final class distribution in each split:")
+    output_lines.append("=" * 50)
 
     for split_name in ["train", "val", "test"]:
         split_labels = os.path.join(merge_dir, split_name, "labels")
@@ -112,11 +118,18 @@ def print_distributions(merge_dir, config):
             except Exception:
                 continue
 
-        print(f"\n{split_name.upper()} ({total_samples} samples):")
+        split_header = f"\n{split_name.upper()} ({total_samples} samples):"
+        print(split_header)
+        output_lines.append(split_header)
+        
         for cls_id in sorted(class_counts.keys()):
             count = class_counts[cls_id]
             percentage = (count / total_samples) * 100 if total_samples > 0 else 0
             
             # Get class name or use fallback
             class_name = class_names.get(cls_id, "?")
-            print(f"  Class {cls_id} ({class_name}): {count} ({percentage:.1f}%)")
+            line = f"  Class {cls_id} ({class_name}): {count} ({percentage:.1f}%)"
+            print(line)
+            output_lines.append(line)
+    
+    return "\n".join(output_lines)
