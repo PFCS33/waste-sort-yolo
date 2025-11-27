@@ -1,0 +1,6 @@
+iterative_stratification==0.1.9
+kagglehub==0.3.13
+numpy==2.3.5
+opencv_python_headless==4.10.0.84
+PyYAML==6.0.3
+roboflow==1.2.11
