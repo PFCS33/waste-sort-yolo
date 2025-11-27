@@ -14,10 +14,20 @@ DATASET_CONFIG_PATH = "dataset-config.yaml"
 
 
 def process_all(config):
-    """Process all steps: download and transform"""
-    pass
-    # download_all(config_path)
-    # transform_all(config_path)
+    """Process all steps: download & transform & merge"""
+    print("Starting complete dataset processing pipeline...")
+    
+    print("\n1. Downloading datasets...")
+    download_all(config)
+    
+    print("\n2. Transforming datasets...")
+    transform_all(config)
+    
+    print("\n3. Merging datasets...")
+    merge_all(config)
+    
+    print("\n✓ Complete pipeline finished successfully!")
+  
 
 
 def main():
