@@ -43,7 +43,7 @@ datasets:
   - name: "Waste-Detection-2"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "waste-detection-ri1v4-u7ajh", 1, "yolov8"]
+      params: ["ecosifttrain", "waste-detection-ri1v4", 2, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: null
@@ -60,7 +60,7 @@ datasets:
   - name: "Waste-Detection-7"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "waste-detection-0momv-jyyb2", 1, "yolov8"]
+      params: ["object-detection-cfmul", "waste-detection-0momv", 7, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: [5]
@@ -81,7 +81,7 @@ datasets:
   - name: "Waste Detect Computer Vision Model"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "waste-detect-y8oeh-wb0gu", 1, "yolov8"]
+      params: ["corderoearl", "waste-detect-y8oeh", 3, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: [0, 2, 6, 7]
@@ -123,7 +123,7 @@ datasets:
   - name: "trash classification Computer Vision Model"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "trash-classification-5nhrf-4i6vb", 1, "yolov8"]
+      params: ["waste1-qbkab", "trash-classification-5nhrf-uzsht", 1, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class:
@@ -211,7 +211,7 @@ datasets:
   - name: "Recycled Materials"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "recycled-materials-ebcoa-rk06c-jxpbo", 1, "yolov8"]
+      params: ["sustaintipsphdeveloper", "recycled-materials-ebcoa", 5, "yolov8"]
     transform:
       coordinate_transform: null
       exclude_class: [4, 5]
@@ -229,16 +229,81 @@ datasets:
         - images: ["valid", "images"]
           labels: ["valid", "labels"]
 
-
   - name: "styrofoam"
     download:
       source: "roboflow"
-      params: ["waste1-qbkab", "styrofoam-qt1kt-rygxv", 1, "yolov8"]
+      params: ["school2-iqyyf", "styrofoam-l0ihw", 3, "yolov8-obb"]
     transform:
       coordinate_transform: null
       exclude_class: null
       class_mapping:
         0: 12
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "styrofoam"
+    download:
+      source: "roboflow"
+      params: ["school2-iqyyf", "styrofoam-l0ihw", 3, "yolov8-obb"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 12
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+
+  - name: "kitchen-tissue detection"
+    download:
+      source: "roboflow"
+      params: ["tissue-detection", "kitchen-tissue-detection", 3, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 11
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "Paper Bag Detection"
+    download:
+      source: "roboflow"
+      params: ["robotic-4x2dl", "paper-bag-detection", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 10
+      paths:
+        - images: ["train", "images"]
+          labels: ["train", "labels"]
+        - images: ["test", "images"]
+          labels: ["test", "labels"]
+        - images: ["valid", "images"]
+          labels: ["valid", "labels"]
+
+  - name: "swu recycle project"
+    download:
+      source: "roboflow"
+      params: ["waste1-qbkab", "swu-recycle-project-fq8xv", 1, "yolov8"]
+    transform:
+      coordinate_transform: null
+      exclude_class: null
+      class_mapping:
+        0: 13
+        1: 8
+        2: 13
       paths:
         - images: ["train", "images"]
           labels: ["train", "labels"]
