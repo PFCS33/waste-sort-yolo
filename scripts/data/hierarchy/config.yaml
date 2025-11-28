@@ -1,5 +1,5 @@
-path_origin: /data2/which-bin
-path_target: /data2/which-bin-h
+path_origin: data2/which-bin
+path_target: data2/which-bin-h
 
 # two layers label
 nc_m: 5

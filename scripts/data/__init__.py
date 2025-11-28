@@ -8,10 +8,11 @@ from utils import (
     count_images,
     print_distributions,
 )
+from hierarchy import generate as generate_hierarchy
 
 # path to config yaml file
-DATASET_CONFIG_PATH = "./config.yaml"
-
+DATASET_CONFIG_PATH = "scripts/data/config.yaml"
+HIERARCHY_CONFIG_PATH = 'scripts/data/hierarchy/config.yaml'
 
 def process_all(config):
     """Process all steps: download & transform & merge"""
@@ -94,6 +95,13 @@ def main():
         "--merge-dir",
         help="Path to merged dataset directory (required for distribution)",
     )
+        # Hierarchy subparser
+    hierarchy_parser = subparsers.add_parser("hierarchy", help="Generate hierarchical dataset")
+    hierarchy_parser.add_argument(
+        "--config",
+        default=HIERARCHY_CONFIG_PATH,
+        help="Path to hierarchy configuration yaml file",
+    )
 
     args = parser.parse_args()
     config_path = getattr(args, "config", DATASET_CONFIG_PATH)
@@ -107,6 +115,8 @@ def main():
         merge_all(config)
     elif args.mode == "all":
         process_all(config)
+    elif args.mode == "hierarchy":
+        generate_hierarchy(args.config)
     elif args.mode == "test":
         if args.func == "draw":
             if not args.image_path or not args.label_path:
