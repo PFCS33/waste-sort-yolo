@@ -1,0 +1,46 @@
+path_origin: /data2/which-bin
+path_target: /data2/which-bin-h
+
+# two layers label
+nc_m: 5
+nc_o: 14
+
+names_m:
+  - METAL
+  - GLASS
+  - PLASTIC
+  - PAPER
+  - CARDBOARD
+
+object_o:
+  - METAL
+  - GLASS
+  - PET_CONTAINER
+  - TDPE_CONTAINER
+  - PLASTIC_WRAPPER
+  - PLASTIC_BAG
+  - TETRAPAK
+  - PAPER
+  - CARDBOARD
+  - PAPER_CUP
+  - PAPER_BAG
+  - USED_TISSUE
+  - STYROFOAM
+  - PLASTIC_CUP
+
+# mapping: (object: material)
+mapping:
+  0: 0 # METAL
+  1: 1 # GLASS
+  2: 2 # PET_CONTAINER
+  3: 2 # HDPE_CONTAINER 
+  4: 2 # PLASTIC_WRAPPER
+  5: 2 # PLASTIC_BAG
+  6: 4 # TETRAPAK
+  7: 3 # PAPER
+  8: 4 # CARDBOARD
+  9: 3 # PAPER_CUP
+  10: 3 # PAPER_BAG
+  11: 3 # USED_TISSUE
+  12: 2 # STYROFOAM
+  13: 2 # PLASTIC_CUP

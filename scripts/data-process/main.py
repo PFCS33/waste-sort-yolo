@@ -10,7 +10,7 @@ from utils import (
 )
 
 # path to config yaml file
-DATASET_CONFIG_PATH = "dataset-config.yaml"
+DATASET_CONFIG_PATH = "./config.yaml"
 
 
 def process_all(config):

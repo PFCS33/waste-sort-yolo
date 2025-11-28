@@ -1,4 +1,4 @@
-# WhichBin Datasets Configuration
+# WhichBin Datasets Configuration for Standard YOLO
 # Version: 1.0
 
 global:
@@ -11,7 +11,7 @@ global:
     - METAL
     - GLASS
     - PET_CONTAINER
-    - TDPE_CONTAINER
+    - HDPE_CONTAINER
     - PLASTIC_WRAPPER
     - PLASTIC_BAG
     - TETRAPAK

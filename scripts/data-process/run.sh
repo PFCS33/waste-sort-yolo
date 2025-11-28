@@ -5,8 +5,7 @@
 
 set -e  # Exit on any error
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DATA_PROCESS_DIR="$PROJECT_ROOT/scripts/data-process"
+DATA_PROCESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SCRIPT="$DATA_PROCESS_DIR/main.py"
 REQUIREMENTS="$DATA_PROCESS_DIR/requirements.txt"
 
