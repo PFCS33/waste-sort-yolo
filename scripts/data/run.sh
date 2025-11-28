@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 DATA_PROCESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PYTHON_SCRIPT="$DATA_PROCESS_DIR/main.py"
+PYTHON_SCRIPT="$DATA_PROCESS_DIR/generate.py"
 REQUIREMENTS="$DATA_PROCESS_DIR/requirements.txt"
 
 # Colors for output
