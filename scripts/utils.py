@@ -1,10 +1,12 @@
+''' Common Utils Functions'''
+
 from ultralytics import settings
 import os
 import wandb
 from ultralytics import YOLO
 
 
-def set_settings(root_dir):
+def set_yolo_settings(root_dir):
     settings.update(
         {
             "datasets_dir": os.path.join(root_dir, "data"),

@@ -2,7 +2,6 @@ import os
 import argparse
 from ultralytics import YOLO
 from scripts.utils import *
-from scripts.train import *
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TRAIN_CONFIG = {
@@ -26,7 +25,18 @@ TRAIN_CONFIG = {
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Waste Sorting Project - Unified Entry Point"
+    )
+
+    # Method selection
+    parser.add_argument(
+        "--method",
+        choices=["baseline", "hierarchical-softmax"],
+        default="baseline",
+        help="Choose implementation method (default: baseline)",
+    )
+
     subparsers = parser.add_subparsers(
         dest="mode", help="Available modes: train / test / convert", required=True
     )
@@ -36,7 +46,6 @@ def parse_args():
     train_parser.add_argument(
         "--run_name", type=str, help="Run name to load last.pt weights from"
     )
-    # python3 main.py train --run_name 
 
     # Test subparser
     test_parser = subparsers.add_parser("test")
@@ -44,7 +53,9 @@ def parse_args():
 
     # Convert subparser
     convert_parser = subparsers.add_parser("convert")
-    convert_parser.add_argument("--path", type=str, required=True, help="path to .pt file you want to convert")
+    convert_parser.add_argument(
+        "--path", type=str, required=True, help="path to .pt file you want to convert"
+    )
 
     return parser.parse_args()
 
@@ -54,31 +65,47 @@ def main():
 
     # initial settings
     wandb_login()
-    set_settings(ROOT_DIR)
+    set_yolo_settings(ROOT_DIR)
 
-    if args.mode == "train":
-        # modify pretrained_weight if run_name provided
-        if args.run_name:
-            TRAIN_CONFIG["pretrained_weight"] = os.path.join(
-                ROOT_DIR, "runs", "detect", args.run_name, "weights", "last.pt"
-            )
+    if args.method == "baseline":
+        from scripts.models.baseline import train, test
 
-        # model
-        model = YOLO(TRAIN_CONFIG["model"])
-        # train
-        train(model, TRAIN_CONFIG, weight_path=TRAIN_CONFIG["pretrained_weight"])
+        if args.mode == "train":
+            # modify pretrained_weight if run_name provided
+            if args.run_name:
+                TRAIN_CONFIG["pretrained_weight"] = os.path.join(
+                    ROOT_DIR, "runs", "detect", args.run_name, "weights", "last.pt"
+                )
 
-    elif args.mode == "test":
-        # test
-        test(args.run_name, TRAIN_CONFIG)
-    
-    elif args.mode == "convert":
-        # convert model to TensorFlow Lite
-        tflite_path = convert_to_tf(args.path)
-        if tflite_path:
-            print(f"Conversion successful! TFLite model saved at: {tflite_path}")
-        else:
-            print("Conversion failed!")
+            # model
+            model = YOLO(TRAIN_CONFIG["model"])
+            # train
+            train(model, TRAIN_CONFIG, weight_path=TRAIN_CONFIG["pretrained_weight"])
+
+        elif args.mode == "test":
+            # test
+            test(args.run_name, TRAIN_CONFIG)
+
+        elif args.mode == "convert":
+            # convert model to TensorFlow Lite
+            tflite_path = convert_to_tf(args.path)
+            if tflite_path:
+                print(f"Conversion successful! TFLite model saved at: {tflite_path}")
+            else:
+                print("Conversion failed!")
+
+    elif args.method == "hierarchical-softmax":
+        # from scripts.models.hierarchical_softmax import train, test
+
+        if args.mode == "train":
+            # TODO: Implement hierarchical training
+            pass
+
+        elif args.mode == "test":
+            # TODO: Implement hierarchical testing
+            pass
+        elif args.mode == "convert":
+            pass
 
 
 if __name__ == "__main__":
