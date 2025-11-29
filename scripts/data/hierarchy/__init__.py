@@ -4,7 +4,7 @@ import os
 import yaml
 import shutil
 from pathlib import Path
-from utils import load_config
+from ..utils import load_config
 
 
 def generate(config_path):
@@ -61,7 +61,7 @@ def generate(config_path):
         print(f"{split}: {count} images")
 
     # Create data.yaml
-    all_names = config["names_m"] + config["object_o"]
+    all_names = config["names_m"] + config["names_o"]
     data_config = {
         "train": "train/images",
         "val": "val/images",

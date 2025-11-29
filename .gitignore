@@ -212,3 +212,4 @@ wandb/
 runs/
 CLAUDE.md
 weights/
+hierarchical_softmax_backup/

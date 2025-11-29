@@ -1,5 +1,5 @@
 import argparse
-from utils import (
+from .utils import (
     download_all,
     load_config,
     transform_all,
@@ -8,11 +8,11 @@ from utils import (
     count_images,
     print_distributions,
 )
-from hierarchy import generate as generate_hierarchy
+from .hierarchy import generate as generate_hierarchy
 
 # path to config yaml file
 DATASET_CONFIG_PATH = "scripts/data/config.yaml"
-HIERARCHY_CONFIG_PATH = 'scripts/data/hierarchy/config.yaml'
+HIERARCHY_CONFIG_PATH = 'scripts/data/hierarchy/config_h.yaml'
 
 def process_all(config):
     """Process all steps: download & transform & merge"""

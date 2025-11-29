@@ -1,4 +1,4 @@
-''' Common Utils Functions'''
+"""Common Utils Functions"""
 
 from ultralytics import settings
 import os
@@ -43,3 +43,5 @@ def convert_to_tf(model_path):
     except Exception as e:
         print(f"Error converting model to TensorFlow Lite: {e}")
         return None
+
+

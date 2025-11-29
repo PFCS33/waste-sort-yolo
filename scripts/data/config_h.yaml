@@ -12,7 +12,7 @@ names_m:
   - PAPER
   - CARDBOARD
 
-object_o:
+names_o:
   - METAL
   - GLASS
   - PET_CONTAINER

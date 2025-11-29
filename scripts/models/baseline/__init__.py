@@ -38,12 +38,12 @@ def train(model, config, weight_path=None):
         "precision": results.results_dict["metrics/precision(B)"],
         "recall": results.results_dict["metrics/recall(B)"],
     }
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("Final Training Metrics:")
-    print("="*50)
+    print("=" * 50)
     for key, value in metrics.items():
         print(f"{key}: {value:.4f}")
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
     return results
 
 
@@ -59,9 +59,27 @@ def test(run_name, config):
         imgsz=config["image_size"],
         device=config["device"],
     )
-    print("\n" + "="*50)
+    metrics = {
+        "mAP50": results.results_dict["metrics/mAP50(B)"],
+        "mAP50-95": results.results_dict["metrics/mAP50-95(B)"],
+        "precision": results.results_dict["metrics/precision(B)"],
+        "recall": results.results_dict["metrics/recall(B)"],
+    }
+    print("\n" + "=" * 50)
     print("Test Metrics:")
-    print("="*50)
+    print("=" * 50)
     for key, value in metrics.items():
         print(f"{key}: {value:.4f}")
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
+
+
+def predict(weight_path, source, conf, save=True, show=False):
+    model = YOLO(weight_path)
+    results = model.predict(
+        source=source,
+        conf=conf,
+        save=save,
+    )
+    if show:
+        for result in results:
+            result.show()
