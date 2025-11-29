@@ -25,9 +25,10 @@ TRAIN_CONFIG = {
 #  Multi-label config
 MULTI_LABEL_CONFIG = {
     "project": "waste-sorting",
+    "project": "waste-sorting",
     "model": "yolov8n.yaml",
     "pretrained_weight": os.path.join(ROOT_DIR, "weights", "yolov8n.pt"),
-    "tags": ["yolov8n", "merge-data", "multi-label"],
+    "tags": ["yolov8n", "merge-data", "multi-label", "hierarchical_softmax"],
     "data_path": os.path.join(
         ROOT_DIR,
         "data_merge",
@@ -41,7 +42,7 @@ MULTI_LABEL_CONFIG = {
     "device": 0,
     "workers": 8,
     "patience": 80,
-    "loss_type": "bce",
+    "loss_type": 'hierarchical_softmax'
 }
 
 
