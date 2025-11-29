@@ -9,14 +9,14 @@ case "${1:-help}" in
         [ -f scripts/data/requirements.txt ] && pip install -r scripts/data/requirements.txt || echo "No requirements.txt found"
         ;;
     download|transform|merge|all)
-        python scripts/data/__init__.py "$@"
+        python -m scripts.data "$@"
         ;;
     hierarchy)
-        python scripts/data/__init__.py hierarchy "${@:2}"
+        python -m scripts.data hierarchy "${@:2}"
         ;;
     test-*)
         func=${1#test-}  # Remove 'test-' prefix
-        python scripts/data/__init__.py test --func "$func" "${@:2}"
+        python -m scripts.data test --func "$func" "${@:2}"
         ;;
     help|--help|-h|*)
         echo "Usage: $0 [command] [options]"

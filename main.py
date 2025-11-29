@@ -11,16 +11,16 @@ TRAIN_CONFIG = {
     "pretrained_weight": os.path.join(
         ROOT_DIR, "weights", "yolov8n.pt"
     ),  # load pretrained COCO weights
-    "tags": ["yolov8n", "baseline"],
+    "tags": ["yolov8n", "merge-vanilla"],
     "data_path": os.path.join(
-        ROOT_DIR, "data", "GARBAGE-CLASSIFICATION-3-2", "data.yaml"
+        ROOT_DIR, "data_merge", "which-bin", "data.yaml"
     ),
-    "num_epochs": 150,
+    "num_epochs": 300,
     "batch_size": 16,
     "image_size": 640,
     "device": 0,  # GPU ID
     "workers": 8,
-    "patience": 20,
+    "patience": 80,
     # "lr0": 0.001
 }
 
@@ -32,8 +32,8 @@ MULTI_LABEL_CONFIG = {
     "tags": ["yolov8n", "merge-data", "multi-label"],
     "data_path": os.path.join(
         ROOT_DIR,
-        "data",
-        "GARBAGE-CLASSIFICATION-3-2",
+        "data_merge",
+        "which-bin-h",
         "data_hierarchical.yaml",  # nc=19
     ),
     "config_file": os.path.join(ROOT_DIR, "scripts", "data", "config_h.yaml"),
@@ -98,9 +98,7 @@ def parse_args():
         action="store_true",
     )
     predict_parser.add_argument(
-        "--show",
-        action="store_true",
-        help="Display prediction results"
+        "--show", action="store_true", help="Display prediction results"
     )
 
     return parser.parse_args()

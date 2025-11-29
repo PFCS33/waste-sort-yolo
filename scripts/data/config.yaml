@@ -2,7 +2,7 @@
 # Version: 1.0
 
 global:
-  root_dir: "data2"
+  root_dir: "data_merge"
   target_format: "yolo"
   custom_name: "which-bin"
   nc: 14
