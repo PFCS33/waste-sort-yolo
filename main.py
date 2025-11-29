@@ -12,9 +12,7 @@ TRAIN_CONFIG = {
         ROOT_DIR, "weights", "yolov8n.pt"
     ),  # load pretrained COCO weights
     "tags": ["yolov8n", "merge-vanilla"],
-    "data_path": os.path.join(
-        ROOT_DIR, "data_merge", "which-bin", "data.yaml"
-    ),
+    "data_path": os.path.join(ROOT_DIR, "data_merge", "which-bin", "data.yaml"),
     "num_epochs": 300,
     "batch_size": 16,
     "image_size": 640,
@@ -26,7 +24,7 @@ TRAIN_CONFIG = {
 
 #  Multi-label config
 MULTI_LABEL_CONFIG = {
-    "project": "waste-sorting-multi_lable",
+    "project": "waste-sorting",
     "model": "yolov8n.yaml",
     "pretrained_weight": os.path.join(ROOT_DIR, "weights", "yolov8n.pt"),
     "tags": ["yolov8n", "merge-data", "multi-label"],
@@ -37,13 +35,13 @@ MULTI_LABEL_CONFIG = {
         "data.yaml",  # nc=19
     ),
     "config_file": os.path.join(ROOT_DIR, "scripts", "data", "config_h.yaml"),
-    "num_epochs": 150,
-    "batch_size": 16,
+    "num_epochs": 300,
+    "batch_size": 32,
     "image_size": 640,
     "device": 0,
     "workers": 8,
-    "patience": 20,
-    "loss_type": 'bce'
+    "patience": 80,
+    "loss_type": "bce",
 }
 
 

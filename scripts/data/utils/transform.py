@@ -276,12 +276,16 @@ def label_transform(
         transformed_lines = []
 
         # 2. each file, read each line, process (cls_id x_center y_center width height)
-        for line in lines:
+        for i, line in enumerate(lines):
+            # if i >= len(lines) / 2:
+            #     continue
             parts = line.strip().split()
             if len(parts) != 5:
                 # convert polygon
                 cls_id = float(parts[0])
-                x_center, y_center, width, height = polygon_to_yolo_bbox([float(p) for p in parts[1:]])
+                x_center, y_center, width, height = polygon_to_yolo_bbox(
+                    [float(p) for p in parts[1:]]
+                )
             else:
                 cls_id, x_center, y_center, width, height = map(float, parts)
 
@@ -305,8 +309,7 @@ def label_transform(
 
 
 def coord_transform(x_center, y_center, width, height):
-     return x_center, y_center, width, height
-
+    return x_center, y_center, width, height
 
 
 def polygon_to_yolo_bbox(polygon):

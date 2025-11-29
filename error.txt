@@ -1,0 +1,55 @@
+wandb: Appending key for api.wandb.ai to your netrc file: /root/.netrc
+wandb: Currently logged in as: aaapfcs (aaapfcs-simon-fraser-university) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run dbdusmhf
+wandb: Tracking run with wandb version 0.23.0
+wandb: Run data is saved locally in /workspace/waste-sort-yolo/wandb/run-20251129_113621-dbdusmhf
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run 20251129_113621
+wandb: ⭐️ View project at https://wandb.ai/aaapfcs-simon-fraser-university/waste-sorting
+wandb: 🚀 View run at https://wandb.ai/aaapfcs-simon-fraser-university/waste-sorting/runs/dbdusmhf
+wandb: WARNING Tried to log to step 150 that is less than the current step 151. Steps must be monotonically increasing, so this data will be ignored. See https://wandb.me/define-metric to log data out of order.
+wandb: uploading artifact run-dbdusmhf-curvesPrecision-ConfidenceB_table-dUoZRQ; updating run metadata; uploading artifact run-dbdusmhf-curvesRecall-ConfidenceB_table-B5LvBw
+wandb: uploading artifact run-dbdusmhf-curvesPrecision-ConfidenceB_table-dUoZRQ; uploading artifact run-dbdusmhf-curvesRecall-ConfidenceB_table-B5LvBw; uploading wandb-summary.json; uploading media/table/curves/Recall-Confidence(B)_table_152_ba9dff435da709544e4e.table.json; uploading output.log
+wandb: uploading artifact run-dbdusmhf-curvesRecall-ConfidenceB_table-B5LvBw; uploading output.log; uploading config.yaml
+wandb: uploading artifact run-dbdusmhf-curvesRecall-ConfidenceB_table-B5LvBw
+wandb: uploading data
+wandb: 
+wandb: Run history:
+wandb:                  lr/pg0 ███▇▇▇▇▇▇▆▆▆▆▆▆▅▅▅▅▅▄▄▄▄▄▃▃▃▃▃▃▃▂▂▂▂▂▂▁▁
+wandb:                  lr/pg1 ▆██▇▇▇▇▇▇▇▆▆▆▆▆▆▅▅▅▅▄▄▄▄▄▄▃▃▃▃▂▂▂▂▂▂▁▁▁▁
+wandb:                  lr/pg2 █████▇▇▇▇▆▆▆▆▆▆▆▅▅▅▅▅▅▄▄▄▄▄▄▃▃▃▂▂▂▂▂▂▁▁▁
+wandb:        metrics/mAP50(B) ▁▆▇▇▇███████████████████████████████████
+wandb:     metrics/mAP50-95(B) ▁▄▅▆▆▆▆▆▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇▇█████████
+wandb:    metrics/precision(B) ▁▆▆▆▇▇▇█████████████████████████████████
+wandb:       metrics/recall(B) ▁▄▅▆▆▇▇▇▇▇▇▇▇███████████████████████████
+wandb:            model/GFLOPs ▁
+wandb:        model/parameters ▁
+wandb: model/speed_PyTorch(ms) ▁
+wandb:                      +6 ...
+wandb: 
+wandb: Run summary:
+wandb:                  lr/pg0 0.00017
+wandb:                  lr/pg1 0.00017
+wandb:                  lr/pg2 0.00017
+wandb:        metrics/mAP50(B) 0.91697
+wandb:     metrics/mAP50-95(B) 0.76938
+wandb:    metrics/precision(B) 0.90794
+wandb:       metrics/recall(B) 0.86313
+wandb:            model/GFLOPs 8.214
+wandb:        model/parameters 3014553
+wandb: model/speed_PyTorch(ms) 0.546
+wandb:                      +6 ...
+wandb: 
+wandb: 🚀 View run 20251129_113621 at: https://wandb.ai/aaapfcs-simon-fraser-university/waste-sorting/runs/dbdusmhf
+wandb: ⭐️ View project at: https://wandb.ai/aaapfcs-simon-fraser-university/waste-sorting
+wandb: Synced 5 W&B file(s), 24 media file(s), 10 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20251129_113621-dbdusmhf/logs
+Traceback (most recent call last):
+  File "/workspace/waste-sort-yolo/main.py", line 179, in <module>
+    main()
+  File "/workspace/waste-sort-yolo/main.py", line 155, in main
+    train(
+  File "/workspace/waste-sort-yolo/scripts/models/multi_label/__init__.py", line 51, in train
+    "mAP50": results.results_dict.get("metrics/mAP50(B)", 0),
+             ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'results_dict'

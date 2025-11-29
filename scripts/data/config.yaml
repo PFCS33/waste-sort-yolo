@@ -241,23 +241,6 @@ datasets:
       paths:
         - images: ["train", "images"]
           labels: ["train", "labels"]
-        - images: ["test", "images"]
-          labels: ["test", "labels"]
-        - images: ["valid", "images"]
-          labels: ["valid", "labels"]
-
-  - name: "styrofoam"
-    download:
-      source: "roboflow"
-      params: ["school2-iqyyf", "styrofoam-l0ihw", 3, "yolov8-obb"]
-    transform:
-      coordinate_transform: null
-      exclude_class: null
-      class_mapping:
-        0: 12
-      paths:
-        - images: ["train", "images"]
-          labels: ["train", "labels"]
 
   - name: "kitchen-tissue detection"
     download:
