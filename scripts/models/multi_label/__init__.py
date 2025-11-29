@@ -42,6 +42,7 @@ def train(config, h_config_path):
         "name": run_name,
         "project": f"runs/{config['project']}",
         "hierarchy_config": h_config_path,
+        "loss_type": config.get("loss_type", "bce"),
     }
 
     trainer = HierarchicalDetectionTrainer(overrides=overrides)
