@@ -75,11 +75,43 @@ def test(run_name, config):
 
 def predict(weight_path, source, conf, save=True, show=False):
     model = YOLO(weight_path)
+
+    print(f"Model classes: {model.names}")
+    print(f"Number of classes: {len(model.names)}")
+    print(f"Confidence threshold: {conf}")
+    print(f"Input source: {source}")
+
     results = model.predict(
         source=source,
         conf=conf,
         save=save,
+        verbose=True,
+        visualize=True,
     )
+
+    # Print detection results
+    for i, result in enumerate(results):
+        print(f"\n--- Result {i+1} ---")
+        print(f"Original image shape: {result.orig_shape}")
+
+        if result.boxes is not None:
+            num_boxes = len(result.boxes)
+            print(f"Number of detected boxes: {num_boxes}")
+
+            if num_boxes > 0:
+                print("Confidences:", result.boxes.conf.cpu().numpy())
+                print("Classes:", result.boxes.cls.cpu().numpy())
+                print(
+                    "Class names:", [model.names[int(cls)] for cls in result.boxes.cls]
+                )
+                print("Boxes (xyxy):", result.boxes.xyxy.cpu().numpy())
+            else:
+                print("No boxes detected!")
+        else:
+            print("No boxes detected!")
+
     if show:
         for result in results:
             result.show()
+
+    return results

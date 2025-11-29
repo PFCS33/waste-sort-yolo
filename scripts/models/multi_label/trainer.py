@@ -19,6 +19,7 @@ class HierarchicalDetectionTrainer(DetectionTrainer):
         overrides = dict(overrides) if overrides else {}
         h_config_path = overrides.pop("hierarchy_config", "hierarchy_config.yaml")
         self.h_config = HierarchyConfig(h_config_path)
+        self.loss_type = overrides.pop("loss_type", "bce")
         LOGGER.info("Custom Trainer loaded!")
         super().__init__(cfg, overrides, _callbacks)
 
@@ -48,4 +49,8 @@ class HierarchicalDetectionTrainer(DetectionTrainer):
     def _setup_train(self):
         """Setup training with multi-lable loss."""
         super()._setup_train()
-        self.criterion = HierarchicalDetectionLoss(self.model, self.h_config)
+        self.criterion = HierarchicalDetectionLoss(
+            self.model,
+            self.h_config,
+            loss_type=self.loss_type,
+        )

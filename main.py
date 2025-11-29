@@ -43,6 +43,7 @@ MULTI_LABEL_CONFIG = {
     "device": 0,
     "workers": 8,
     "patience": 20,
+    "loss_type": 'bce'
 }
 
 
