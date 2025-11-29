@@ -47,10 +47,12 @@ class HierarchicalDetectionTrainer(DetectionTrainer):
         )
 
     def _setup_train(self):
-        """Setup training with multi-lable loss."""
-        super()._setup_train()
-        self.criterion = HierarchicalDetectionLoss(
+        super()._setup_train()  
+        
+        custom_loss = HierarchicalDetectionLoss(
             self.model,
             self.h_config,
             loss_type=self.loss_type,
         )
+        # Replace model's criterion
+        self.model.criterion = custom_loss

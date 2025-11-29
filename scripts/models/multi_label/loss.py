@@ -39,14 +39,19 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
         elif loss_type == "hyolo":
             self._build_object_to_material_tensor()
         LOGGER.info("Custom Loss Loaded!")
+        
 
     def __call__(self, preds, batch):
         """Compute loss based on loss_type."""
+        
         if self.loss_type == "bce":
+            LOGGER.warning(f"Calling _forward_bce")
             return self._forward_bce(preds, batch)
         elif self.loss_type == "hierarchical_softmax":
+            LOGGER.warning(f"Calling _forward_hierarchical_softmax")
             return self._forward_hierarchical_softmax(preds, batch)
         elif self.loss_type == "hierarchical_penalty":
+            LOGGER.warning(f"Calling _forward_penalty")
             return self._forward_penalty(preds, batch)
         else:
             raise ValueError(f"Unknown loss_type: {self.loss_type}")
@@ -97,6 +102,16 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
         # ========== Build multi-hot targets ==========
         cls_multihot = batch["cls_multihot"].to(self.device)
         batch_idx = batch["batch_idx"].to(self.device)
+        
+        # DEBUG: 检查输入的multi-hot targets
+        LOGGER.info(f"\n=== DEBUG BCE Loss ===")
+        LOGGER.info(f"cls_multihot shape: {cls_multihot.shape}")
+        LOGGER.info(f"cls_multihot数据类型: {cls_multihot.dtype}")
+        if cls_multihot.shape[0] > 0:
+            LOGGER.info(f"第一个GT的cls_multihot:")
+            LOGGER.info(f"  材料级别 (0-4): {cls_multihot[0, :5]}")
+            LOGGER.info(f"  对象级别 (5-18): {cls_multihot[0, 5:]}")
+            LOGGER.info(f"  激活总数: 材料={cls_multihot[0, :5].sum()}, 对象={cls_multihot[0, 5:].sum()}")
 
         target_scores_multihot = self._build_multihot_targets(
             target_gt_idx=target_gt_idx,
@@ -106,6 +121,29 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
             batch_idx=batch_idx,
             batch_size=batch_size,
         )
+        
+        # DEBUG: 检查构建后的multi-hot targets
+        LOGGER.info(f"target_scores_multihot shape: {target_scores_multihot.shape}")
+        fg_total = fg_mask.sum().item()
+        LOGGER.info(f"前景anchor数量: {fg_total}")
+        
+        if fg_total > 0:
+            # 统计材料和对象级别的激活
+            material_targets = target_scores_multihot[:, :, :5].sum(dim=(0,1))  # [5]
+            object_targets = target_scores_multihot[:, :, 5:].sum(dim=(0,1))    # [14]
+            
+            LOGGER.info(f"材料级别targets激活统计: {material_targets}")
+            LOGGER.info(f"对象级别targets激活统计: {object_targets}")
+            LOGGER.info(f"材料级别总激活: {material_targets.sum():.2f}")
+            LOGGER.info(f"对象级别总激活: {object_targets.sum():.2f}")
+            
+            # 检查第一个前景anchor的targets
+            first_fg_batch, first_fg_anchor = torch.where(fg_mask)
+            if len(first_fg_batch) > 0:
+                b, a = first_fg_batch[0].item(), first_fg_anchor[0].item()
+                LOGGER.info(f"第一个前景anchor [{b},{a}] targets:")
+                LOGGER.info(f"  材料级别: {target_scores_multihot[b, a, :5]}")
+                LOGGER.info(f"  对象级别: {target_scores_multihot[b, a, 5:]}")
 
         # ========== Classification Loss (BCE with multi-hot) ==========
         loss[1] = (

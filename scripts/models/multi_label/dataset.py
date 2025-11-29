@@ -55,6 +55,17 @@ class HierarchicalYOLODataset(YOLODataset):
 
         return multi_hot
 
+    def __getitem__(self, index):
+        result = super().__getitem__(index)
+        # Add cls_multihot from labels
+        cls = result.get("cls", None)
+        if cls is not None and len(cls) > 0:
+            result["cls_multihot"] = self._get_to_multihot(cls.numpy())
+        else:
+            result["cls_multihot"] = torch.zeros((0, self.h_config.nc_total), dtype=torch.float32)
+        return result
+
+    
     @staticmethod
     def collate_fn(batch: list[dict]):
         """Collate with cls_multihot support."""
