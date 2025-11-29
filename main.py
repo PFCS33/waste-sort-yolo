@@ -34,7 +34,7 @@ MULTI_LABEL_CONFIG = {
         ROOT_DIR,
         "data_merge",
         "which-bin-h",
-        "data_hierarchical.yaml",  # nc=19
+        "data.yaml",  # nc=19
     ),
     "config_file": os.path.join(ROOT_DIR, "scripts", "data", "config_h.yaml"),
     "num_epochs": 150,

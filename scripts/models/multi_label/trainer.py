@@ -5,6 +5,7 @@ Combine custom dataset & loss
 from ultralytics.models.yolo.detect import DetectionTrainer
 from ultralytics.utils import LOGGER, colorstr
 from ultralytics.utils.torch_utils import unwrap_model
+from ultralytics.cfg import DEFAULT_CFG
 
 from .config import HierarchyConfig
 from .dataset import HierarchicalYOLODataset
@@ -14,13 +15,11 @@ from .loss import HierarchicalDetectionLoss
 class HierarchicalDetectionTrainer(DetectionTrainer):
     """Trainer for hierarchical multi-label detection."""
 
-    def __init__(self, cfg=None, overrides=None, _callbacks=None):
-        overrides = overrides or {}
-        h_config_path = overrides.get("hierarchy_config", "hierarchy_config.yaml")
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        overrides = dict(overrides) if overrides else {}
+        h_config_path = overrides.pop("hierarchy_config", "hierarchy_config.yaml")
         self.h_config = HierarchyConfig(h_config_path)
-
         LOGGER.info("Custom Trainer loaded!")
-
         super().__init__(cfg, overrides, _callbacks)
 
     def build_dataset(self, img_path, mode="train", batch=None):
@@ -46,7 +45,7 @@ class HierarchicalDetectionTrainer(DetectionTrainer):
             h_config=self.h_config,
         )
 
-    def _setup_train(self, world_size):
+    def _setup_train(self):
         """Setup training with multi-lable loss."""
-        super()._setup_train(world_size)
+        super()._setup_train()
         self.criterion = HierarchicalDetectionLoss(self.model, self.h_config)

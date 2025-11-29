@@ -1,7 +1,5 @@
-# models/multi_label/__init__.py
-
 """
-Hierarchical Multi-label Detection for YOLO.
+Multi-label Detection for YOLO.
 """
 
 from datetime import datetime
@@ -16,6 +14,7 @@ from .trainer import HierarchicalDetectionTrainer
 
 
 def train(config, h_config_path):
+
     run_name = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # WandB init
