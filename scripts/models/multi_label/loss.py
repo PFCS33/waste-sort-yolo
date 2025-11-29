@@ -18,10 +18,11 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
     - Assigner still uses single-label cls for matching
     """
 
-    def __init__(self, model, h_config, loss_type="bce"):
+    def __init__(self, model, h_config, loss_type="bce", consistency_weight=10):
         super().__init__(model)
         self.h_config = h_config
         self.loss_type = loss_type
+        self.consistency_weight = consistency_weight
         # validate model nc matches hierarchy config
         if self.nc != h_config.nc_total:
             raise ValueError(
@@ -35,6 +36,8 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
         )
         if loss_type == "hierarchical_softmax":
             self._build_hierarchy_structure()
+        elif loss_type == "hyolo":
+            self._build_object_to_material_tensor()
         LOGGER.info("Custom Loss Loaded!")
 
     def __call__(self, preds, batch):
@@ -43,6 +46,8 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
             return self._forward_bce(preds, batch)
         elif self.loss_type == "hierarchical_softmax":
             return self._forward_hierarchical_softmax(preds, batch)
+        elif self.loss_type == "hierarchical_penalty":
+            return self._forward_penalty(preds, batch)
         else:
             raise ValueError(f"Unknown loss_type: {self.loss_type}")
 
@@ -383,3 +388,173 @@ class HierarchicalDetectionLoss(v8DetectionLoss):
             total_loss = total_loss + loss_material + loss_object
 
         return total_loss
+
+    def _forward_penalty(self, preds, batch):
+        """hYOLO-style loss: BCE + hierarchy violation penalty"""
+        loss = torch.zeros(3, device=self.device)
+        feats = preds[1] if isinstance(preds, tuple) else preds
+        pred_distri, pred_scores = torch.cat(
+            [xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2
+        ).split((self.reg_max * 4, self.nc), 1)
+
+        pred_scores = pred_scores.permute(0, 2, 1).contiguous()
+        pred_distri = pred_distri.permute(0, 2, 1).contiguous()
+
+        dtype = pred_scores.dtype
+        batch_size = pred_scores.shape[0]
+        imgsz = (
+            torch.tensor(feats[0].shape[2:], device=self.device, dtype=dtype)
+            * self.stride[0]
+        )
+        anchor_points, stride_tensor = make_anchors(feats, self.stride, 0.5)
+
+        targets = torch.cat(
+            (batch["batch_idx"].view(-1, 1), batch["cls"].view(-1, 1), batch["bboxes"]),
+            1,
+        )
+        targets = self.preprocess(targets, batch_size, scale_tensor=imgsz[[1, 0, 1, 0]])
+        gt_labels, gt_bboxes = targets.split((1, 4), 2)
+        mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0.0)
+
+        pred_bboxes = self.bbox_decode(anchor_points, pred_distri)
+
+        _, target_bboxes, target_scores, fg_mask, target_gt_idx = self.assigner(
+            pred_scores.detach().sigmoid(),
+            (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
+            anchor_points * stride_tensor,
+            gt_labels,
+            gt_bboxes,
+            mask_gt,
+        )
+
+        target_scores_sum = max(target_scores.sum(), 1)
+
+        # Build multi-hot targets
+        cls_multihot = batch["cls_multihot"].to(self.device)
+        batch_idx = batch["batch_idx"].to(self.device)
+
+        target_scores_multihot = self._build_multihot_targets(
+            target_gt_idx,
+            fg_mask,
+            target_scores,
+            cls_multihot,
+            batch_idx,
+            batch_size,
+        )
+
+        # ========== BCE Loss ==========
+        loss_bce = self.bce(pred_scores, target_scores_multihot.to(dtype)).sum()
+
+        # ========== Hierarchy Penalty (hYOLO) ==========
+        loss_penalty = self._hierarchy_penalty(
+            pred_scores=pred_scores,
+            fg_mask=fg_mask,
+            target_scores_multihot=target_scores_multihot,
+        )
+
+        # L_cls = L_BCE + α × L_penalty
+        loss[1] = loss_bce / target_scores_sum + self.consistency_weight * loss_penalty
+
+        # ========== Box Loss ==========
+        if fg_mask.sum():
+            loss[0], loss[2] = self.bbox_loss(
+                pred_distri,
+                pred_bboxes,
+                anchor_points,
+                target_bboxes / stride_tensor,
+                target_scores,
+                target_scores_sum,
+                fg_mask,
+            )
+
+        loss[0] *= self.hyp.box
+        loss[1] *= self.hyp.cls
+        loss[2] *= self.hyp.dfl
+
+        return loss * batch_size, loss.detach()
+
+    def _hierarchy_penalty(
+        self,
+        pred_scores,
+        fg_mask,
+        target_scores_multihot,
+    ):
+        """
+        Predicted child's parent ≠ GT parent at same anchor
+        """
+        h = self.h_config
+        device = pred_scores.device
+        obj_to_mat = self.obj_to_mat.to(device)
+
+        batch_size = pred_scores.shape[0]
+        total_penalty = torch.tensor(0.0, device=device)
+        total_violations = 0
+
+        for b in range(batch_size):
+            fg_anchor_mask = fg_mask[b]
+            if not fg_anchor_mask.any():
+                continue
+
+            fg_indices = torch.where(fg_anchor_mask)[0]
+            fg_pred = pred_scores[b, fg_indices]  # [num_fg, nc_total]
+            fg_target = target_scores_multihot[b, fg_indices]  # [num_fg, nc_total]
+
+            # Predicted confidences
+            pred_conf = fg_pred.sigmoid()  # [num_fg, nc_total]
+
+            # Object predictions and targets
+            object_pred_conf = pred_conf[:, h.nc_material :]  # [num_fg, nc_object]
+            object_target = fg_target[:, h.nc_material :]  # [num_fg, nc_object]
+
+            # Find FALSE POSITIVES: conf > threshold AND target == 0
+            threshold = 0.001
+            fp_mask = (object_pred_conf > threshold) & (object_target == 0)
+
+            if not fp_mask.any():
+                continue
+
+            # GT material for each foreground anchor
+            gt_material = fg_target[:, : h.nc_material].argmax(dim=-1)  # [num_fg]
+
+            # Get FP indices: (anchor_idx, obj_local_idx)
+            fp_anchor_indices, fp_obj_local_indices = torch.where(fp_mask)
+
+            if len(fp_anchor_indices) == 0:
+                continue
+
+            # Convert local object index to global class index
+            fp_obj_global_indices = fp_obj_local_indices + h.nc_material  # [num_fp]
+
+            # Parent material for each FP object
+            fp_parent_material = obj_to_mat[fp_obj_global_indices]  # [num_fp]
+
+            # GT material at each FP anchor
+            fp_gt_material = gt_material[fp_anchor_indices]  # [num_fp]
+
+            # δ = 1 if parent matches GT, else 0
+            delta = (fp_parent_material == fp_gt_material).float()  # [num_fp]
+
+            # Confidence of each FP object
+            fp_conf = object_pred_conf[
+                fp_anchor_indices, fp_obj_local_indices
+            ]  # [num_fp]
+
+            # Penalty = (1 - δ) × conf
+            penalty = (1 - delta) * fp_conf  # [num_fp]
+
+            total_penalty = total_penalty + penalty.sum()
+            total_violations += (penalty > 0).sum().item()
+
+        # Normalize by number of violations
+        if total_violations > 0:
+            total_penalty = total_penalty / total_violations
+
+        return total_penalty
+
+    def _build_object_to_material_tensor(self):
+        """Build tensor for fast object → material lookup."""
+        h = self.h_config
+        self.obj_to_mat = torch.tensor(
+            [h.get_material_id(i) for i in range(h.nc_total)],
+            dtype=torch.long,
+        )
