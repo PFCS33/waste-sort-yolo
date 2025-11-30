@@ -6,6 +6,29 @@ from ultralytics.utils.ops import xywh2xyxy
 from ultralytics.utils import LOGGER
 import torchvision
 
+# Dixon's Q critical values for 95% confidence level
+# Based on number of object classes
+DIXON_Q_CRITICAL_95 = {
+    3: 0.941,
+    4: 0.765,
+    5: 0.642,
+    6: 0.560,
+    7: 0.507,
+    8: 0.468,
+    9: 0.437,
+    10: 0.412,
+    11: 0.392,
+    12: 0.376,
+    13: 0.361,
+    14: 0.349,
+    15: 0.338,
+    16: 0.329,
+    17: 0.320,
+    18: 0.313,
+    19: 0.306,
+    20: 0.300,
+}
+
 
 def hierarchical_nms(
     prediction,

@@ -7,6 +7,7 @@ Hierarchical Detection Predictor with Dixon's Q fallback.
 import torch
 from ultralytics.models.yolo.detect import DetectionPredictor
 from ultralytics.utils import ops
+from ultralytics.cfg import DEFAULT_CFG
 
 from .config import HierarchyConfig
 from .nms import hierarchical_nms
@@ -15,15 +16,13 @@ from .nms import hierarchical_nms
 class HierarchicalDetectionPredictor(DetectionPredictor):
     """Predictor with hierarchical NMS"""
 
-    def __init__(self, cfg=None, overrides=None, _callbacks=None):
-        super().__init__(cfg, overrides, _callbacks)
-
+    def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
+        overrides = overrides or {}
         # Load hierarchy config
-        h_config_path = (overrides or {}).get(
-            "hierarchy_config", "hierarchy_config.yaml"
-        )
+        h_config_path = overrides.pop("hierarchy_config", "hierarchy_config.yaml")
         self.h_config = HierarchyConfig(h_config_path)
-        self.q_critical = (overrides or {}).get("q_critical", None)
+        self.q_critical = overrides.pop("q_critical", None)  # 默认为None，可选参数
+        super().__init__(cfg, overrides, _callbacks)
 
     def postprocess(self, preds, img, orig_imgs, **kwargs):
         # If no hierarchy config, use standard postprocess
