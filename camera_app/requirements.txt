@@ -1,0 +1,13 @@
+# Camera detection app dependencies
+# Note: For Mac users with camera permission issues, use opencv-python-headless instead
+opencv-python>=4.5.0
+numpy>=1.21.0
+ultralytics>=8.0.0
+torch>=1.13.0
+torchvision>=0.14.0
+
+# Alternative for Mac camera permission issues (uncomment if needed):
+# opencv-python-headless>=4.5.0
+
+# Optional dependencies (for better performance)
+Pillow>=8.0.0
