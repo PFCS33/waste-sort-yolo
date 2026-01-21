@@ -7,9 +7,10 @@
 
 A hierarchical object detection system for real-time waste sorting, featuring multi-label classification with material-level fallback for robust handling of novel objects.
 
+## Demo
 
 <p align="center">
-  <img src="assets/pipeline.png" alt="BinGo System Pipeline" width="800"/>
+  <img src="https://github.com/user-attachments/assets/8a209090-e66f-4c9f-a526-24c9edacc63b" alt="BinGo Demo" width="300"/>
 </p>
 
 ## Highlights
@@ -19,14 +20,9 @@ A hierarchical object detection system for real-time waste sorting, featuring mu
 - **114% mAP Improvement**: From 0.36 (baseline) to 0.77 through dataset optimization
 - **Mobile Ready**: TensorFlow Lite deployment for real-time Android inference
 
-## Demo
-
-<p align="center">
-  <img src="https://github.com/user-attachments/assets/8a209090-e66f-4c9f-a526-24c9edacc63b" alt="BinGo Demo" width="300"/>
-</p>
 
 
-## Architecture
+## Workflow
 
 ```
                     ┌─────────────────┐
@@ -58,7 +54,7 @@ pip install -r requirements.txt
 ### Inference
 
 ```bash
-python predict.py --source path/to/image.jpg --weights weights/best.pt
+python main.py --source path/to/image.jpg --weights weights/best.pt
 ```
 
 ## Dataset
@@ -84,11 +80,48 @@ We constructed a balanced 14-class dataset by merging 13+ public sources.
 
 </details>
 
+
 ### Data Preparation
 
+Our automated pipeline downloads, transforms, and merges multiple public datasets using a YAML configuration.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/6ecb0f22-9f56-4b5a-99a2-57666e782305" alt="Data Pipeline" width="450"/>
+</p>
+
+**YAML Configuration Template:**
+
+```yaml
+global:
+  root_dir: "data_merge"          # Output directory
+  target_format: "yolo"           # Annotation format
+  nc: 14                          # Number of classes
+  split: [0.8, 0.1, 0.1]          # Train/val/test split ratio
+  classes:                        # Unified class names
+    - METAL
+    - GLASS
+    - PET_CONTAINER
+    # ... (14 classes total)
+
+datasets:
+  - name: "dataset-name"
+    download:
+      source: "roboflow"          # Source: roboflow | kaggle
+      params: ["workspace", "project", version, "yolov8"]
+    transform:
+      exclude_class: [0, 2]       # Classes to exclude (optional)
+      class_mapping:              # Map source labels to unified labels
+        0: 8                      # source_id: target_id
+        1: 1
+    paths:                        # Image/label paths in source dataset
+      - images: ["train", "images"]
+        labels: ["train", "labels"]
+```
+
+**Run the pipeline:**
+
 ```bash
-# Configure datasets in configs/dataset.yaml, then run:
-python scripts/prepare_dataset.py --config configs/dataset.yaml
+bash run_data.sh
 ```
 
 ## Model Zoo
@@ -104,20 +137,12 @@ python scripts/prepare_dataset.py --config configs/dataset.yaml
 
 ```bash
 # Standard training
-python train.py --data configs/data.yaml --cfg yolov8n.yaml --epochs 300
+python main.py --mode train --data configs/data.yaml --epochs 300
 
 # Hierarchical multi-label training
-python train_hierarchical.py --data configs/data.yaml --loss bce_penalty --epochs 300
+python main.py --mode train --loss bce_penalty --epochs 300
 ```
 
-<details>
-<summary><b>Key Arguments</b></summary>
-
-- `--loss`: Loss function (`bce` | `bce_penalty`)
-- `--imgsz`: Input image size (default: 640)
-- `--batch`: Batch size (default: 16)
-
-</details>
 
 ## Results
 
@@ -129,29 +154,29 @@ python train_hierarchical.py --data configs/data.yaml --loss bce_penalty --epoch
 | 2 | Fine-grained (14-class) | 0.77 | - |
 | 3 | Hierarchical + Fallback | 0.76 | 64% |
 
-### Qualitative Results
-
-<p align="center">
-  <img src="assets/comparison.png" alt="Detection Comparison" width="700"/>
-</p>
-
-*Left: Baseline misses paper bag and mislabels HDPE container. Right: Our model correctly detects both.*
 
 ## Project Structure
 
 ```
 waste-sort-yolo/
-├── configs/           # Dataset and training configs
-├── scripts/           # Data preparation pipeline
-├── src/
-│   ├── dataset/       # Custom YOLODataset for multi-hot labels
-│   ├── loss/          # BCE and hierarchical penalty loss
-│   ├── models/        # Modified YOLOv8 architecture
-│   └── utils/         # NMS with fallback, evaluation
-├── weights/           # Pretrained models
-├── train.py
-├── train_hierarchical.py
-└── predict.py
+├── main.py                 # Entry point for training/inference
+├── run_data.sh             # Dataset preparation script
+├── weights/                # Pretrained model weights
+└── scripts/
+    ├── data/               # Dataset pipeline
+    │   ├── config.yaml     # Dataset configuration
+    │   ├── config_h.yaml   # Hierarchical config
+    │   └── utils/          # Download, transform, merge utilities
+    ├── models/
+    │   ├── baseline/       # Standard YOLOv8 training
+    │   └── multi_label/    # Hierarchical multi-label YOLO
+    │       ├── config.py   # Hierarchy configuration
+    │       ├── dataset.py  # Multi-hot label generation
+    │       ├── loss.py     # BCE & hierarchical penalty loss
+    │       ├── nms.py      # NMS with fallback mechanism
+    │       ├── predictor.py
+    │       └── trainer.py
+    └── utils.py
 ```
 
 ## Related Repositories
@@ -161,17 +186,7 @@ waste-sort-yolo/
 | [panqier/vcproject](https://github.com/panqier/vcproject) | Android app with TFLite deployment |
 | [ultralytics/ultralytics](https://github.com/ultralytics/ultralytics) | YOLOv8 base implementation |
 
-## Citation
 
-```bibtex
-@misc{bingo2025,
-  author = {Huiyou Liu and Qier Pan and Yunshan Feng},
-  title = {BinGo: Multi-Item Waste Classification for Intelligent Sorting},
-  year = {2025},
-  publisher = {GitHub},
-  url = {https://github.com/PFCS33/waste-sort-yolo}
-}
-```
 
 ## Acknowledgments
 
