@@ -5,7 +5,7 @@
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-green.svg)](https://github.com/ultralytics/ultralytics)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A hierarchical object detection system for real-time waste sorting, featuring multi-label classification with material-level fallback for robust handling of novel objects.
+A hierarchical object detection app for real-time waste sorting, featuring multi-label classification with material-level prediction fallback for robust handling of novel objects.
 
 ## Demo
 
