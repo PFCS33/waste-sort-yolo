@@ -1,11 +1,11 @@
-# BinGo: Multi-Item Waste Classification for Intelligent Sorting
+# BinGo: Real-Time Multi-Item Waste Sorting App
 
 [![Python 3.8+](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-green.svg)](https://github.com/ultralytics/ultralytics)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A hierarchical object detection app for real-time waste sorting, featuring multi-label classification with material-level prediction fallback for robust handling of novel objects.
+A object detection app for real-time waste sorting, featuring multi-label classification with coarse-material prediction fallback for robust handling of novel objects.
 
 ## Demo
 
